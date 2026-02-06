@@ -2039,12 +2039,24 @@
         ];
         // --- FINE DATABASE ---
 
-        function QuickLex() {
+function QuickLex() {
             const [query, setQuery] = useState("");
             const [selected, setSelected] = useState(null);
-            const [favorites, setFavorites] = useState([]);
-            const [showOnlyFavs, setShowOnlyFavs] = useState(false);
             const [activeTab, setActiveTab] = useState('it');
+
+            // --- PUNTO 2: MEMORIA DEI PREFERITI ---
+            // Inizializziamo i preferiti leggendo dalla memoria del telefono
+            const [favorites, setFavorites] = useState(() => {
+                const saved = localStorage.getItem("quicklex_favs");
+                return saved ? JSON.parse(saved) : [];
+            });
+
+            // Ogni volta che i preferiti cambiano, li salviamo nella memoria
+            useEffect(() => {
+                localStorage.setItem("quicklex_favs", JSON.stringify(favorites));
+            }, [favorites]);
+
+            const [showOnlyFavs, setShowOnlyFavs] = useState(false);
 
             const toggleFavorite = (id) => {
                 setFavorites(prev => 
@@ -2052,8 +2064,9 @@
                 );
             };
 
+            // --- PUNTO 1: ORDINE ALFABETICO E FILTRO ---
             const filtered = useMemo(() => {
-                return legalTermsData.filter(t => {
+                let result = legalTermsData.filter(t => {
                     const matchesSearch = 
                         t.it.term.toLowerCase().includes(query.toLowerCase()) ||
                         t.en.term.toLowerCase().includes(query.toLowerCase()) ||
@@ -2061,7 +2074,12 @@
                     const matchesFav = showOnlyFavs ? favorites.includes(t.id) : true;
                     return matchesSearch && matchesFav;
                 });
+
+                // Ordiniamo dalla A alla Z in base al termine italiano
+                return result.sort((a, b) => a.it.term.localeCompare(b.it.term));
             }, [query, showOnlyFavs, favorites]);
+
+            // ... (il resto del codice dell'interfaccia rimane lo stesso)
 
             if (selected) {
                 return (
