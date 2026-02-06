@@ -4,31 +4,37 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>QuickLex</title>
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { background-color: black; color: white; margin: 0; }
-        ::-webkit-scrollbar { width: 0px; }
+        body { background-color: #000; color: #fff; margin: 0; font-family: sans-serif; }
+        #root { min-height: 100vh; }
+        /* Nascondiamo lo schermo nero iniziale finché React non è pronto */
+        [v-cloak] { display: none; }
     </style>
 </head>
 <body>
-    <div id="root"></div>
+    <div id="root">
+        <div style="display: flex; justify-content: center; align-items: center; height: 100vh; color: #FF6B00; font-weight: bold;">
+            Caricamento QuickLex...
+        </div>
+    </div>
 
     <script type="text/babel">
-        const { useState, useMemo } = React;
+        const { useState, useMemo, useEffect } = React;
 
-        // INCOLLA QUI IL TUO ARRAY DI 250 TERMINI
+        // --- INIZIO DATABASE ---
         const legalTermsData = [
-  {
-     id: 1,
-     category: "Diritti Umani",
-     it: { term: "Diritto all'equo processo", def: "Diritto di ogni persona a una procedura giudiziaria imparziale e pubblica." },
-     es: { term: "Derecho a un juicio justo", def: "Derecho fundamental a un proceso judicial con todas las garantías." },
-     en: { term: "Right to a fair trial", def: "A fundamental safeguard to ensure that individuals are protected." },
-     legalNote: "Nota: Articolo 6 della CEDU. Legato al 'Due Process' anglosassone."
-  }
+            {
+                id: 1,
+                category: "Diritti Umani",
+                it: { term: "Diritto all'equo processo", def: "Diritto di ogni persona a una procedura giudiziaria imparziale e pubblica." },
+                es: { term: "Derecho a un juicio justo", def: "Derecho fundamental a un proceso judicial con todas las garantías." },
+                en: { term: "Right to a fair trial", def: "A fundamental safeguard to ensure that individuals are protected." },
+                legalNote: "Nota: Articolo 6 della CEDU. Legato al 'Due Process' anglosassone."
+            },
             
   {
     id: 2,
@@ -2022,7 +2028,8 @@
     en: { term: "Ex officio annulment", def: "The invalidation of an act by the same authority that issued it." },
     legalNote: null
   }
- ];
+        ];
+        // --- FINE DATABASE ---
 
         function QuickLex() {
             const [query, setQuery] = useState("");
@@ -2039,9 +2046,10 @@
 
             const filtered = useMemo(() => {
                 return legalTermsData.filter(t => {
-                    const matchesSearch = t.it.term.toLowerCase().includes(query.toLowerCase()) ||
-                                          t.en.term.toLowerCase().includes(query.toLowerCase()) ||
-                                          t.es.term.toLowerCase().includes(query.toLowerCase());
+                    const matchesSearch = 
+                        t.it.term.toLowerCase().includes(query.toLowerCase()) ||
+                        t.en.term.toLowerCase().includes(query.toLowerCase()) ||
+                        t.es.term.toLowerCase().includes(query.toLowerCase());
                     const matchesFav = showOnlyFavs ? favorites.includes(t.id) : true;
                     return matchesSearch && matchesFav;
                 });
@@ -2049,13 +2057,13 @@
 
             if (selected) {
                 return (
-                    <div className="p-6 max-w-xl mx-auto min-h-screen">
+                    <div className="p-6 max-w-xl mx-auto min-h-screen animate-in fade-in duration-300">
                         <button onClick={() => setSelected(null)} className="text-[#FF6B00] font-bold mb-6 flex items-center gap-2">
                              ← Torna alla lista
                         </button>
                         <div className="bg-[#111] border border-[#222] p-8 rounded-[2.5rem] shadow-2xl">
                             <span className="text-[#FF6B00] text-[10px] font-black uppercase border border-[#FF6B00] px-3 py-1 rounded-full">{selected.category}</span>
-                            <h2 className="text-4xl font-black mt-4 mb-8 leading-tight">{selected.it.term}</h2>
+                            <h2 className="text-4xl font-black mt-4 mb-8 leading-tight text-white">{selected.it.term}</h2>
                             <div className="flex bg-black p-1 rounded-xl mb-6 border border-[#222]">
                                 {['it', 'en', 'es'].map(l => (
                                     <button key={l} onClick={() => setActiveTab(l)} className={`flex-1 py-2 rounded-lg text-xs font-bold uppercase transition-all ${activeTab === l ? 'bg-[#FF6B00] text-black' : 'text-gray-500'}`}>{l}</button>
@@ -2071,8 +2079,8 @@
                                     <p className="text-gray-400 italic leading-relaxed text-lg">{selected[activeTab].def}</p>
                                 </div>
                                 {selected.legalNote && (
-                                    <div className="mt-10 p-5 bg-[#FF6B0011] border border-[#FF6B0033] rounded-2xl text-sm text-gray-300">
-                                        <strong className="text-[#FF6B00] block mb-1">NOTA:</strong> {selected.legalNote}
+                                    <div className="mt-10 p-5 bg-[#FF6B00]/10 border border-[#FF6B00]/20 rounded-2xl text-sm text-gray-300">
+                                        <strong className="text-[#FF6B00] block mb-1 uppercase text-[10px]">Nota Legale:</strong> {selected.legalNote}
                                     </div>
                                 )}
                             </div>
@@ -2084,25 +2092,24 @@
             return (
                 <div className="p-6 max-w-xl mx-auto min-h-screen">
                     <div className="flex justify-between items-center mb-8">
-                        <h1 className="text-3xl font-black italic tracking-tighter">QUICK<span className="text-[#FF6B00]">LEX</span></h1>
-                        <button onClick={() => setShowOnlyFavs(!showOnlyFavs)} className={`p-3 rounded-full transition-all ${showOnlyFavs ? 'bg-[#FF6B00] text-black shadow-[0_0_15px_#FF6B00]' : 'bg-[#111] text-gray-500'}`}>
+                        <h1 className="text-3xl font-black italic tracking-tighter text-white">QUICK<span className="text-[#FF6B00]">LEX</span></h1>
+                        <button onClick={() => setShowOnlyFavs(!showOnlyFavs)} className={`p-3 rounded-full transition-all ${showOnlyFavs ? 'bg-[#FF6B00] text-black shadow-[0_0_15px_rgba(255,107,0,0.4)]' : 'bg-[#111] text-gray-500'}`}>
                             {showOnlyFavs ? '★' : '☆'}
                         </button>
                     </div>
                     <div className="relative mb-10">
                         <input 
                             type="text" 
-                            placeholder="Cerca termine legale..." 
-                            className="w-full bg-[#111] border border-[#222] rounded-2xl py-4 px-6 text-white focus:border-[#FF6B00] outline-none transition-all shadow-inner"
+                            placeholder="Cerca termine..." 
+                            className="w-full bg-[#111] border border-[#222] rounded-2xl py-4 px-6 text-white focus:border-[#FF6B00] outline-none transition-all"
                             onChange={(e) => setQuery(e.target.value)}
                         />
                     </div>
                     <div className="space-y-4">
-                        <p className="text-[10px] font-bold text-gray-600 uppercase tracking-widest mb-2">Risultati: {filtered.length}</p>
                         {filtered.map(t => (
-                            <div key={t.id} onClick={() => setSelected(t)} className="bg-[#111] border border-[#222] p-5 rounded-2xl flex justify-between items-center cursor-pointer hover:border-[#FF6B00] transition-all active:scale-[0.98]">
+                            <div key={t.id} onClick={() => setSelected(t)} className="bg-[#111] border border-[#222] p-5 rounded-2xl flex justify-between items-center cursor-pointer hover:border-[#FF6B00] transition-all">
                                 <div>
-                                    <h3 className="font-bold text-lg">{t.it.term}</h3>
+                                    <h3 className="font-bold text-lg text-white">{t.it.term}</h3>
                                     <p className="text-[10px] text-gray-500 mt-1 uppercase">EN: {t.en.term} | ES: {t.es.term}</p>
                                 </div>
                                 <button 
