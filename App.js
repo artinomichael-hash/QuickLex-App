@@ -1,0 +1,2155 @@
+import React, { useState, useMemo } from 'react';
+
+// DATABASE (Incolla qui i tuoi 250 termini)
+const legalTermsData = [
+  {
+    id: 1,
+    category: "Diritti Umani",
+    it: { term: "Diritto all'equo processo", def: "Diritto di ogni persona a una procedura giudiziaria imparziale e pubblica." },
+    es: { term: "Derecho a un juicio justo", def: "Derecho fundamental a un proceso judicial con todas las garantías." },
+    en: { term: "Right to a fair trial", def: "A fundamental safeguard to ensure that individuals are protected." },
+    legalNote: "Nota: Articolo 6 della CEDU. Legato al 'Due Process' anglosassone."
+  },
+  {
+    id: 2,
+    category: "Diritto Internazionale",
+    it: { term: "Crimini contro l'umanità", def: "Atto commesso nell'ambito di un attacco esteso o sistematico contro popolazioni civili." },
+    es: { term: "Crímenes de lesa humanidad", def: "Delitos cometidos como parte de un ataque generalizado contra civiles." },
+    en: { term: "Crimes against humanity", def: "Certain acts that are deliberately committed as part of a widespread or systematic policy." },
+    legalNote: "Nota: Definiti dallo Statuto di Roma della Corte Penale Internazionale."
+  },
+  {
+    id: 3,
+    category: "Diritto Internazionale",
+    it: { term: "Genocidio", def: "Atti commessi con l'intento di distruggere un gruppo nazionale, etnico, razziale o religioso." },
+    es: { term: "Genocidio", def: "Exterminio o eliminación sistemática de un grupo social por motivos étnicos o religiosos." },
+    en: { term: "Genocide", def: "The deliberate killing of a large number of people from a particular nation or ethnic group." },
+    legalNote: "Nota: La prova dell''intent' (dolo specifico) è l'elemento più difficile da dimostrare nei tribunali internazionali."
+  },
+  {
+    id: 4,
+    category: "Diritti Umani",
+    it: { term: "Diritto d'asilo", def: "Protezione offerta da uno Stato a una persona che fugge da persecuzioni." },
+    es: { term: "Derecho de asilo", def: "Protección que un Estado ofrece a personas que huyen por persecución política." },
+    en: { term: "Right of asylum", def: "Protection granted by a nation to someone who has left their native country as a political refugee." },
+    legalNote: "Nota: Spesso confuso con il concetto di 'Refugee status', che è il riconoscimento tecnico dell'asilo."
+  },
+  {
+    id: 5,
+    category: "Diritto Internazionale",
+    it: { term: "Principio di non-refoulement", def: "Divieto di respingere rifugiati verso territori dove la loro vita sarebbe minacciata." },
+    es: { term: "Principio de no devolución", def: "Principio que prohíbe el retorno forzoso de refugiados a lugares de peligro." },
+    en: { term: "Non-refoulement principle", def: "A fundamental principle of international law that forbids a country from returning asylum seekers to a country where they would be in danger." },
+    legalNote: "Nota: È una norma di 'Jus Cogens', ovvero inderogabile dal diritto internazionale consuetudinario."
+  },
+  {
+    id: 6,
+    category: "Diritto Internazionale",
+    it: { term: "Sovranità statale", def: "Potere supremo ed esclusivo dello Stato sul proprio territorio e popolazione." },
+    es: { term: "Soberanía estatal", def: "Poder supremo de un Estado sobre su territorio y sus ciudadanos." },
+    en: { term: "State sovereignty", def: "The principle that a state has exclusive authority over its territory and domestic affairs." },
+    legalNote: "Nota: Oggi limitata dai trattati internazionali sui diritti umani."
+  },
+  {
+    id: 7,
+    category: "Diritto Internazionale",
+    it: { term: "Trattato internazionale", def: "Accordo scritto tra soggetti di diritto internazionale." },
+    es: { term: "Tratado internacional", def: "Acuerdo escrito entre Estados o sujetos de derecho internacional." },
+    en: { term: "Treaty", def: "A formally concluded and ratified agreement between states." },
+    legalNote: "Nota: In inglese si distingue tra 'Treaty' (formale) e 'Executive Agreement' (meno formale)."
+  },
+  {
+    id: 8,
+    category: "Diritti Umani",
+    it: { term: "Tortura", def: "Inflizione di dolore fisico o mentale per ottenere informazioni o punire." },
+    es: { term: "Tortura", def: "Acto de infligir dolor o sufrimiento físico o mental grave." },
+    en: { term: "Torture", def: "The action or practice of inflicting severe pain or suffering on someone." },
+    legalNote: "Nota: Divieto assoluto secondo la Convenzione ONU del 1984. Non ammette deroghe nemmeno in stato di guerra."
+  },
+  {
+    id: 9,
+    category: "Diritto Internazionale",
+    it: { term: "Giurisdizione universale", def: "Potere di un tribunale nazionale di giudicare crimini internazionali ovunque commessi." },
+    es: { term: "Jurisdicción universal", def: "Principio que permite a los estados juzgar crímenes graves independientemente de dónde se cometieron." },
+    en: { term: "Universal jurisdiction", def: "A legal principle that allows states to claim criminal jurisdiction over an accused person regardless of where the crime was committed." },
+    legalNote: "Nota: Utilizzata spesso per crimini di guerra e crimini contro l'umanità."
+  },
+  {
+    id: 10,
+    category: "Diritti Umani",
+    it: { term: "Scomparsa forzata", def: "Arresto o sequestro di persona da parte dello Stato seguito dal rifiuto di ammetterne la sorte." },
+    es: { term: "Desaparición forzada", def: "Privación de la libertad cometida por agentes del Estado seguida de la ocultación de la víctima." },
+    en: { term: "Enforced disappearance", def: "The arrest, detention or abduction of persons by agents of the State followed by a refusal to acknowledge the deprivation of liberty." },
+    legalNote: "Nota: Concetto nato storicamente in America Latina ('Desaparecidos')."
+  },
+  {
+    id: 11,
+    category: "Diritto Internazionale",
+    it: { term: "Corte Penale Internazionale (CPI)", def: "Tribunale internazionale permanente per crimini di guerra e genocidio." },
+    es: { term: "Corte Penal Internacional (CPI)", def: "Tribunal encargado de juzgar a personas acusadas de cometer crímenes de genocidio y guerra." },
+    en: { term: "International Criminal Court (ICC)", def: "An intergovernmental organization and international tribunal that sits in The Hague." },
+    legalNote: "Nota: Da non confondere con la CIG (Corte Internazionale di Giustizia) che risolve dispute tra Stati."
+  },
+  {
+    id: 12,
+    category: "Diritti Umani",
+    it: { term: "Libertà di espressione", def: "Diritto di manifestare liberamente il proprio pensiero." },
+    es: { term: "Libertad de expresión", def: "Derecho a expresar y difundir libremente pensamientos e ideas." },
+    en: { term: "Freedom of speech", def: "The right to express any opinions without censorship or restraint." },
+    legalNote: "Nota: Negli USA (First Amendment) ha una tutela quasi assoluta rispetto all'Europa."
+  },
+  {
+    id: 13,
+    category: "Diritto Internazionale",
+    it: { term: "Rifugiato", def: "Persona che si trova fuori dal proprio paese per timore di persecuzione." },
+    es: { term: "Refugiado", def: "Persona que se ve obligada a abandonar su país para escapar de la guerra o la persecución." },
+    en: { term: "Refugee", def: "A person who has been forced to leave their country in order to escape war, persecution, or natural disaster." },
+    legalNote: "Nota: Definizione stabilita dalla Convenzione di Ginevra del 1951."
+  },
+  {
+    id: 14,
+    category: "Diritto Internazionale",
+    it: { term: "Autodeterminazione dei popoli", def: "Diritto di un popolo di scegliere il proprio sistema di governo." },
+    es: { term: "Libre determinación de los pueblos", def: "Derecho de un pueblo a decidir sus propias formas de gobierno." },
+    en: { term: "Self-determination", def: "The process by which a country determines its own statehood and forms its own allegiances and government." },
+    legalNote: "Nota: Pilastro della decolonizzazione e della Carta ONU."
+  },
+  {
+    id: 15,
+    category: "Diritti Umani",
+    it: { term: "Lavoro forzato", def: "Ogni lavoro o servizio esatto sotto minaccia di pena." },
+    es: { term: "Trabajo forzoso", def: "Todo trabajo o servicio exigido bajo la amenaza de una pena cualquiera." },
+    en: { term: "Forced labor", def: "Situations in which persons are coerced to work through the use of violence or intimidation." },
+    legalNote: "Nota: Proibito dalla Convenzione ILO n. 29."
+  },
+  {
+    id: 16,
+    category: "Diritto Internazionale",
+    it: { term: "Crimine di guerra", def: "Violazione grave delle leggi e delle consuetudini di guerra." },
+    es: { term: "Crimen de guerra", def: "Infracción grave del Derecho Internacional Humanitario cometida durante un conflicto." },
+    en: { term: "War crime", def: "An action carried out during the conduct of a war that violates accepted international rules of war." },
+    legalNote: "Nota: Basati sulle Convenzioni di Ginevra del 1949."
+  },
+  {
+    id: 17,
+    category: "Diritti Umani",
+    it: { term: "Diritto alla riservatezza", def: "Diritto di escludere terzi dalla propria sfera privata (Privacy)." },
+    es: { term: "Derecho a la intimidad", def: "Derecho fundamental que protege la esfera privada de las personas." },
+    en: { term: "Right to privacy", def: "The qualified right to be free from intrusion into or publicity concerning matters of a personal nature." },
+    legalNote: "Nota: In Europa è fortemente protetto dal GDPR, negli USA è un concetto meno unitario."
+  },
+  {
+    id: 18,
+    category: "Diritto Internazionale",
+    it: { term: "Sanzioni economiche", def: "Misure coercitive non militari adottate contro uno Stato." },
+    es: { term: "Sanciones económicas", def: "Medidas restrictivas adoptadas por un país o bloque contra otro." },
+    en: { term: "Economic sanctions", def: "Commercial and financial penalties applied by states or organizations against a targeted self-governing entity." },
+    legalNote: null
+  },
+  {
+    id: 19,
+    category: "Diritti Umani",
+    it: { term: "Pena di morte", def: "Esecuzione di un prigioniero come punizione per un reato." },
+    es: { term: "Pena de muerte", def: "Sanción jurídica que consiste en quitar la vida a un condenado." },
+    en: { term: "Capital punishment", def: "The legally authorized killing of someone as punishment for a crime." },
+    legalNote: "Nota: Proibita nella maggior parte dei sistemi europei e dal Protocollo n. 6 della CEDU."
+  },
+  {
+    id: 20,
+    category: "Diritto Internazionale",
+    it: { term: "Persona non grata", def: "Membro di una missione diplomatica la cui presenza non è più gradita dallo Stato ospitante." },
+    es: { term: "Persona no grata", def: "Diplomático que ya no es bienvenido en el país anfitrión." },
+    en: { term: "Persona non grata", def: "A foreign person whose entering or remaining in a particular country is prohibited by that country's government." },
+    legalNote: "Nota: Termine latino usato universalmente nel diritto diplomatico."
+  },
+  {
+    id: 21,
+    category: "Diritti Umani",
+    it: { term: "Lavoro minorile", def: "Sfruttamento di bambini in attività lavorative che li privano della loro infanzia." },
+    es: { term: "Trabajo infantil", def: "Explotación de niños en actividades que dañan su desarrollo físico o psicológico." },
+    en: { term: "Child labor", def: "The use of children in industry or business, especially when illegal or considered inhumane." },
+    legalNote: "Nota: Regolato dalla Convenzione ILO n. 182."
+  },
+  {
+    id: 22,
+    category: "Diritto Internazionale",
+    it: { term: "Riconoscimento di Stato", def: "Atto politico unilaterale con cui uno Stato ammette l'esistenza di un altro Stato." },
+    es: { term: "Reconocimiento de Estado", def: "Acto por el cual uno o varios Estados constatan la existencia de un nuevo Estado." },
+    en: { term: "State recognition", def: "The act of recognizing a political entity as being a sovereign state." },
+    legalNote: "Nota: Esistono due teorie: dichiarativa e costitutiva. La più accettata è quella dichiarativa (Convenzione di Montevideo)."
+  },
+  {
+    id: 23,
+    category: "Diritti Umani",
+    it: { term: "Libertà di religione", def: "Diritto di professare liberamente la propria fede o di non averne alcuna." },
+    es: { term: "Libertad de culto", def: "Derecho a elegir y profesar una religión de forma libre y pública." },
+    en: { term: "Freedom of religion", def: "The right to choose a religion (or no religion) without interference by the government." },
+    legalNote: null
+  },
+  {
+    id: 24,
+    category: "Diritto Internazionale",
+    it: { term: "Jus Cogens", def: "Norme consuetudinarie inderogabili del diritto internazionale." },
+    es: { term: "Ius cogens", def: "Normas imperativas de derecho internacional que no admiten acuerdo en contrario." },
+    en: { term: "Peremptory norm (Jus Cogens)", def: "A fundamental principle of international law that is accepted by the international community as a norm from which no derogation is permitted." },
+    legalNote: "Nota: Include divieti come genocidio, schiavitù e tortura."
+  },
+  {
+    id: 25,
+    category: "Diritti Umani",
+    it: { term: "Tratta di esseri umani", def: "Reclutamento e trasporto di persone tramite minaccia o forza per scopi di sfruttamento." },
+    es: { term: "Trata de personas", def: "Comercio ilegal de seres humanos con fines de esclavitud o explotación." },
+    en: { term: "Human trafficking", def: "The trade of humans for the purpose of forced labor, sexual slavery, or commercial sexual exploitation." },
+    legalNote: "Nota: Distinto dallo 'Smuggling' (contrabbando di migranti), dove c'è il consenso della persona."
+  },
+  {
+    id: 26,
+    category: "Diritto Internazionale",
+    it: { term: "Immunità diplomatica", def: "Privilegi che proteggono i diplomatici dalla giurisdizione dello Stato ospitante." },
+    es: { term: "Inmunidad diplomática", def: "Beneficio de la exención de la jurisdicción civil y penal para diplomáticos." },
+    en: { term: "Diplomatic immunity", def: "The protection given to diplomats from being prosecuted under the laws of the host country." },
+    legalNote: "Nota: Codificata nella Convenzione di Vienna del 1961."
+  },
+  {
+    id: 27,
+    category: "Diritti Umani",
+    it: { term: "Diritto all'istruzione", def: "Diritto fondamentale di ogni individuo di ricevere un insegnamento." },
+    es: { term: "Derecho a la educación", def: "Derecho de toda persona a una formación integral y gratuita en niveles básicos." },
+    en: { term: "Right to education", def: "The human right to receive instruction and a high quality of teaching." },
+    legalNote: null
+  },
+  {
+    id: 28,
+    category: "Diritto Internazionale",
+    it: { term: "Intervento umanitario", def: "Uso della forza da parte di uno Stato per proteggere i cittadini di un altro Stato." },
+    es: { term: "Intervención humanitaria", def: "Acción de un Estado en el territorio de otro para proteger derechos humanos básicos." },
+    en: { term: "Humanitarian intervention", def: "A state's use of military force against another state, with the stated goal of ending human rights violations." },
+    legalNote: "Nota: Concetto controverso che spesso si scontra con il principio di sovranità."
+  },
+  {
+    id: 29,
+    category: "Diritti Umani",
+    it: { term: "Diritto alla vita", def: "Diritto di ogni essere umano a non essere privato della propria esistenza." },
+    es: { term: "Derecho a la vida", def: "Derecho fundamental que reconoce que todo ser humano tiene derecho a vivir." },
+    en: { term: "Right to life", def: "The belief that a human being has the right to live and, in particular, should not be killed by another entity." },
+    legalNote: "Nota: Include spesso il dibattito su eutanasia e aborto a seconda della giurisdizione."
+  },
+  {
+    id: 30,
+    category: "Diritto Internazionale",
+    it: { term: "Alto Mare", def: "Area marina non sottoposta alla sovranità di alcuno Stato." },
+    es: { term: "Alta mar", def: "Aguas marítimas situadas más allá de las zonas económicas exclusivas." },
+    en: { term: "High seas", def: "The open ocean, especially that not within any country's jurisdiction." },
+    legalNote: "Nota: Regolato dalla Convenzione di Montego Bay (UNCLOS)."
+  },
+  {
+    id: 31,
+    category: "Diritto Internazionale",
+    it: { term: "Belligerante", def: "Stato o gruppo che partecipa attivamente a un conflitto armato." },
+    es: { term: "Beligerante", def: "Sujeto que participa en una guerra de forma legítima y reconocida." },
+    en: { term: "Belligerent", def: "A nation or person engaged in war or conflict, as recognized by international law." },
+    legalNote: null
+  },
+  {
+    id: 32,
+    category: "Diritti Umani",
+    it: { term: "Discriminazione razziale", def: "Distinzione o restrizione basata sulla razza o origine etnica." },
+    es: { term: "Discriminación racial", def: "Exclusión o restricción basada en motivos de raza o color." },
+    en: { term: "Racial discrimination", def: "Any discrimination against any individual on the basis of their skin color, or racial or ethnic origin." },
+    legalNote: null
+  },
+  {
+    id: 33,
+    category: "Diritto Internazionale",
+    it: { term: "Arbitrato internazionale", def: "Metodo di risoluzione delle dispute tra Stati tramite un terzo imparziale." },
+    es: { term: "Arbitraje internacional", def: "Método de resolución de conflictos entre estados a través de árbitros elegidos." },
+    en: { term: "International arbitration", def: "A method for resolving disputes between states or international organizations by impartial judges." },
+    legalNote: "Nota: Si distingue dal processo davanti alla Corte Internazionale perché le parti scelgono i giudici."
+  },
+  {
+    id: 34,
+    category: "Diritti Umani",
+    it: { term: "Libertà di associazione", def: "Diritto di formare gruppi o organizzazioni per scopi comuni." },
+    es: { term: "Libertad de asociación", def: "Derecho a crear o participar en grupos, sindicatos o partidos políticos." },
+    en: { term: "Freedom of association", def: "The right to join with others in a group for any legal purpose." },
+    legalNote: null
+  },
+  {
+    id: 35,
+    category: "Diritto Internazionale",
+    it: { term: "Neutralità", def: "Status di uno Stato che non partecipa a una guerra tra altri Stati." },
+    es: { term: "Neutralidad", def: "Posición de un Estado que decide no participar en un conflicto bélico." },
+    en: { term: "Neutrality", def: "The state of not supporting or helping either side in a conflict, disagreement, etc." },
+    legalNote: "Nota: La Svizzera è l'esempio storico di neutralità permanente."
+  },
+  {
+    id: 36,
+    category: "Diritti Umani",
+    it: { term: "Diritti civili", def: "Diritti che garantiscono la libertà individuale contro le interferenze del governo." },
+    es: { term: "Derechos civiles", def: "Derechos que protegen la libertad de los ciudadanos ante el Estado." },
+    en: { term: "Civil rights", def: "The rights of citizens to political and social freedom and equality." },
+    legalNote: "Nota: Spesso accoppiati ai 'Political rights' (Diritti politici)."
+  },
+  {
+    id: 37,
+    category: "Diritto Internazionale",
+    it: { term: "Annessione", def: "Acquisizione forzata di territorio da parte di uno Stato." },
+    es: { term: "Anexión", def: "Incorporación de un territorio a otro Estado, generalmente por la fuerza." },
+    en: { term: "Annexation", def: "The administrative action and concept in international law relating to the forcible acquisition of territory by one state." },
+    legalNote: "Nota: Considerata illegale sotto la Carta ONU se ottenuta tramite l'uso della forza."
+  },
+  {
+    id: 38,
+    category: "Diritti Umani",
+    it: { term: "Eguaglianza davanti alla legge", def: "Principio per cui tutti sono soggetti alle stesse leggi senza privilegi." },
+    es: { term: "Igualdad ante la ley", def: "Principio que establece que todos los ciudadanos deben ser tratados igual por el sistema jurídico." },
+    en: { term: "Equality before the law", def: "The principle that each independent being must be treated equally by the law." },
+    legalNote: null
+  },
+  {
+    id: 39,
+    category: "Diritto Internazionale",
+    it: { term: "Convenzione", def: "Accordo formale tra Stati su questioni specifiche (sinonimo di Trattato)." },
+    es: { term: "Convenio", def: "Acuerdo oficial entre Estados sobre una materia determinada." },
+    en: { term: "Convention", def: "An agreement between states covering particular matters, especially one less formal than a treaty." },
+    legalNote: null
+  },
+  {
+    id: 40,
+    category: "Diritti Umani",
+    it: { term: "Diritti inalienabili", def: "Diritti che non possono essere ceduti o tolti a un individuo." },
+    es: { term: "Derechos inalienables", def: "Derechos que no pueden ser negados ni transferidos a nadie." },
+    en: { term: "Inalienable rights", def: "Rights that cannot be taken away or given up." },
+    legalNote: "Nota: Concetto base della Dichiarazione d'Indipendenza USA e della Dichiarazione Universale del 1948."
+  },
+  {
+    id: 41,
+    category: "Diritto Internazionale",
+    it: { term: "Ratifica", def: "Atto con cui uno Stato conferma la propria volontà di essere vincolato a un trattato." },
+    es: { term: "Ratificación", def: "Confirmación formal de un Estado para obligarse por un tratado." },
+    en: { term: "Ratification", def: "The official way to confirm something, usually by vote; the formal validation of a treaty." },
+    legalNote: "Nota: Spesso richiede l'approvazione del Parlamento nazionale."
+  },
+  {
+    id: 42,
+    category: "Diritti Umani",
+    it: { term: "Obiezione di coscienza", def: "Rifiuto di compiere un atto previsto dalla legge per motivi etici o religiosi." },
+    es: { term: "Objeción de conciencia", def: "Negativa a cumplir una obligación legal por motivos morales o de conciencia." },
+    en: { term: "Conscientious objection", def: "Refusal to perform a legal obligation based on moral or religious grounds." },
+    legalNote: "Nota: Comune in ambito militare o medico."
+  },
+  {
+    id: 43,
+    category: "Diritto Internazionale",
+    it: { term: "Legittima difesa", def: "Uso della forza autorizzato in risposta a un attacco armato." },
+    es: { term: "Legítima defensa", def: "Uso de la fuerza permitido en respuesta a una agresión previa." },
+    en: { term: "Self-defense", def: "The right of a state to use force in response to an armed attack." },
+    legalNote: "Nota: Articolo 51 della Carta ONU."
+  },
+  {
+    id: 44,
+    category: "Diritti Umani",
+    it: { term: "Amnistia", def: "Atto legislativo che estingue il reato e la pena per un gruppo di persone." },
+    es: { term: "Amnistía", def: "Medida legislativa que perdona delitos cometidos, generalmente de carácter político." },
+    en: { term: "Amnesty", def: "An official pardon for people who have been convicted of political offenses." },
+    legalNote: "Nota: Nel diritto internazionale, l'amnistia per crimini contro l'umanità è considerata illegale."
+  },
+  {
+    id: 45,
+    category: "Diritto Internazionale",
+    it: { term: "Extraterritorialità", def: "Esenzione dalle leggi locali goduta da determinati luoghi o persone (es. Ambasciate)." },
+    es: { term: "Extraterritorialidad", def: "Estatus jurídica por el cual un lugar está exento de la jurisdicción local." },
+    en: { term: "Extraterritoriality", def: "The state of being exempted from the jurisdiction of local law." },
+    legalNote: null
+  },
+  {
+    id: 46,
+    category: "Diritti Umani",
+    it: { term: "Diritti sociali", def: "Diritti legati al benessere economico e sociale (es. salute, lavoro)." },
+    es: { term: "Derechos sociales", def: "Derechos que garantizan condiciones de vida dignas." },
+    en: { term: "Social rights", def: "Rights that arise from the social contract and concern the well-being of individuals." },
+    legalNote: null
+  },
+  {
+    id: 47,
+    category: "Diritto Internazionale",
+    it: { term: "Rappresaglia", def: "Atto illecito compiuto da uno Stato in risposta a un illecito subito." },
+    es: { term: "Represalia", def: "Medida de castigo que un Estado aplica a otro en respuesta a un agravio." },
+    en: { term: "Reprisal", def: "An act of retaliation, specifically in international law, an action otherwise illegal that is justified as a response to a prior illegal act." },
+    legalNote: "Nota: Oggi soggetta a forti limiti di proporzionalità."
+  },
+  {
+    id: 48,
+    category: "Diritti Umani",
+    it: { term: "Principio di legalità", def: "Nessuno può essere punito se non in forza di una legge entrata in vigore prima del fatto." },
+    es: { term: "Principio de legalidad", def: "Principio que exige que todo acto del Estado esté basado en la ley." },
+    en: { term: "Principle of legality", def: "The requirement that all government action must be authorized by law." },
+    legalNote: "Nota: 'Nullum crimen, nulla poena sine lege'."
+  },
+  {
+    id: 49,
+    category: "Diritto Internazionale",
+    it: { term: "Mandato", def: "Sistema di amministrazione fiduciaria di territori ex-coloniali (storico)." },
+    es: { term: "Mandato", def: "Administración de un territorio por una potencia bajo supervisión internacional." },
+    en: { term: "Mandate", def: "An authorization granted by the League of Nations to a member nation to govern a former German or Turkish colony." },
+    legalNote: null
+  },
+  {
+    id: 50,
+    category: "Diritto Internazionale",
+    it: { term: "Crimine di aggressione", def: "Pianificazione o esecuzione di un atto di forza armata contro la sovranità di un altro Stato." },
+    es: { term: "Crimen de agresión", def: "Uso de la fuerza armada por un Estado contra la integridad de otro." },
+    en: { term: "Crime of aggression", def: "The planning, preparation, initiation, or execution of an act of armed force by a state against another." },
+    legalNote: "Nota: Uno dei quattro crimini sotto la giurisdizione della CPI."
+  },
+  {
+    id: 51,
+    category: "Diritto Penale",
+    it: { term: "Omicidio colposo", def: "Cagionare la morte di un uomo per negligenza, imprudenza o imperizia." },
+    es: { term: "Homicidio imprudente", def: "Muerte causada por una acción negligente sin intención de matar." },
+    en: { term: "Manslaughter", def: "The crime of killing a human being without malice aforethought." },
+    legalNote: "Nota: In inglese si distingue tra 'Involuntary manslaughter' (colposo) e 'Voluntary manslaughter' (passionale/provocato)."
+  },
+  {
+    id: 52,
+    category: "Diritto Penale",
+    it: { term: "Omicidio volontario", def: "Uccisione di un essere umano compiuta con la volontà di voler causare la morte." },
+    es: { term: "Homicidio doloso", def: "Muerte causada con intención y voluntad de matar." },
+    en: { term: "Murder", def: "The unlawful premeditated killing of one human being by another." },
+    legalNote: "Nota: Nel sistema USA si divide in 'First-degree' (premeditato) e 'Second-degree' (intenzionale ma non premeditato)."
+  },
+  {
+    id: 53,
+    category: "Procedura Penale",
+    it: { term: "Presunzione di innocenza", def: "Principio per cui l'imputato è considerato non colpevole sino alla condanna definitiva." },
+    es: { term: "Presunción de inocencia", def: "Derecho a ser considerado inocente hasta que se demuestre lo contrario." },
+    en: { term: "Presumption of innocence", def: "The legal principle that one is considered innocent until proven guilty." },
+    legalNote: "Nota: Cardine dell'onere della prova (burden of proof) a carico dell'accusa."
+  },
+  {
+    id: 54,
+    category: "Diritto Penale",
+    it: { term: "Reato", def: "Fatto umano alla cui realizzazione la legge riconnette una sanzione penale." },
+    es: { term: "Delito", def: "Acción u omisión tipificada y penada por la ley." },
+    en: { term: "Crime / Offense", def: "An action or omission that constitutes an offense that may be prosecuted by the state." },
+    legalNote: "Nota: In inglese 'Felony' indica i reati gravi, 'Misdemeanor' quelli minori."
+  },
+  {
+    id: 55,
+    category: "Procedura Penale",
+    it: { term: "Pubblico Ministero (PM)", def: "Organo che esercita l'azione penale per conto dello Stato." },
+    es: { term: "Fiscal", def: "Funcionario que representa los intereses del Estado y la sociedad en un juicio." },
+    en: { term: "Prosecutor / District Attorney", def: "The lawyer who conducts the case against a defendant in a criminal court." },
+    legalNote: "Nota: Negli USA il 'DA' è spesso una figura elettiva, diversamente dal magistrato di carriera italiano."
+  },
+  {
+    id: 56,
+    category: "Diritto Penale",
+    it: { term: "Tentato delitto", def: "Comimento di atti idonei diretti in modo non equivoco a commettere un reato." },
+    es: { term: "Tentativa", def: "Inicio de la ejecución de un delito que no se llega a consumar por causas ajenas." },
+    en: { term: "Attempt", def: "An effort or endeavor to accomplish a crime, which falls short of complete execution." },
+    legalNote: null
+  },
+  {
+    id: 57,
+    category: "Procedura Penale",
+    it: { term: "Custodia cautelare", def: "Limitazione della libertà prima della sentenza definitiva per prevenire fuga o inquinamento prove." },
+    es: { term: "Prisión preventiva", def: "Medida cautelar de privación de libertad mientras dura el proceso." },
+    en: { term: "Pre-trial detention", def: "The process of detaining a person who has been arrested and charged until their trial." },
+    legalNote: null
+  },
+  {
+    id: 58,
+    category: "Diritto Penale",
+    it: { term: "Circostanze aggravanti", def: "Elementi che aumentano la gravità del reato e la relativa pena." },
+    es: { term: "Agravantes", def: "Circunstancias que aumentan la responsabilidad criminal." },
+    en: { term: "Aggravating circumstances", def: "Factors that increase the severity or culpability of a criminal act." },
+    legalNote: null
+  },
+  {
+    id: 59,
+    category: "Diritto Penale",
+    it: { term: "Circostanze attenuanti", def: "Elementi che riducono la gravità del reato e la relativa pena." },
+    es: { term: "Atenuantes", def: "Circunstancias que reducen la responsabilidad criminal." },
+    en: { term: "Mitigating circumstances", def: "Factors that do not justify or excuse an offense but may reduce the penalty." },
+    legalNote: null
+  },
+  {
+    id: 60,
+    category: "Diritto Penale",
+    it: { term: "Furto", def: "Sottrazione di una cosa mobile altrui a chi la detiene, al fine di trarne profitto." },
+    es: { term: "Hurto", def: "Tomar una cosa ajena sin voluntad de su dueño y sin violencia." },
+    en: { term: "Theft / Larceny", def: "The unlawful taking of personal property with intent to deprive the rightful owner of it." },
+    legalNote: "Nota: 'Robbery' in inglese implica violenza o minaccia (rapina), 'Theft' è il termine generico."
+  },
+  {
+    id: 61,
+    category: "Diritto Penale",
+    it: { term: "Rapina", def: "Sottrazione di cosa altrui mediante violenza o minaccia." },
+    es: { term: "Robo con violencia", def: "Apropiación de cosa ajena empleando fuerza o intimidación." },
+    en: { term: "Robbery", def: "The action of taking property unlawfully from a person or place by force or threat of force." },
+    legalNote: null
+  },
+  {
+    id: 62,
+    category: "Diritto Penale",
+    it: { term: "Corruzione", def: "Accordo tra un privato e un pubblico ufficiale per l'esercizio di funzioni in cambio di denaro." },
+    es: { term: "Corrupción / Cohecho", def: "Soborno de un funcionario público en el ejercicio de sus funciones." },
+    en: { term: "Bribery", def: "The offering, giving, receiving, or soliciting of something of value to influence an official." },
+    legalNote: "Nota: In spagnolo 'Cohecho' è il termine tecnico specifico per la corruzione di funzionari."
+  },
+  {
+    id: 63,
+    category: "Diritto Penale",
+    it: { term: "Peculato", def: "Appropriazione indebita di denaro pubblico da parte di un pubblico ufficiale." },
+    es: { term: "Malversación de fondos", def: "Apropiación indebida de dinero público por parte de quien lo administra." },
+    en: { term: "Embezzlement (Public)", def: "Theft or misappropriation of funds placed in one's trust or belonging to one's employer." },
+    legalNote: null
+  },
+  {
+    id: 64,
+    category: "Procedura Penale",
+    it: { term: "Mandato di cattura / arresto", def: "Ordine scritto di un'autorità giudiziaria che autorizza l'arresto." },
+    es: { term: "Orden de detención", def: "Mandato judicial para detener a una persona." },
+    en: { term: "Arrest warrant", def: "A warrant issued by a judge or magistrate on behalf of the state, which authorizes the arrest." },
+    legalNote: null
+  },
+  {
+    id: 65,
+    category: "Diritto Penale",
+    it: { term: "Riciclaggio di denaro", def: "Operazioni volte a nascondere la provenienza illecita di capitali." },
+    es: { term: "Blanqueo de capitales", def: "Proceso de ocultar el origen ilícito de dinero obtenido ilegalmente." },
+    en: { term: "Money laundering", def: "The concealment of the origins of illegally obtained money." },
+    legalNote: null
+  },
+  {
+    id: 66,
+    category: "Diritto Penale",
+    it: { term: "Associazione a delinquere", def: "Accordo tra tre o più persone allo scopo di commettere più delitti." },
+    es: { term: "Asociación ilícita", def: "Agrupación de personas destinada a cometer delitos." },
+    en: { term: "Criminal conspiracy", def: "An agreement between two or more persons to commit a crime." },
+    legalNote: "Nota: In Italia esiste la specifica 'Associazione di tipo mafioso' (416-bis) non presente in altri codici."
+  },
+  {
+    id: 67,
+    category: "Diritto Penale",
+    it: { term: "Legittima difesa", def: "Causa di esclusione della punibilità per chi ha agito per necessità di difendere un diritto proprio." },
+    es: { term: "Legítima defensa", def: "Causa que exime de responsabilidad ante la necesidad de defenderse de una agresión." },
+    en: { term: "Self-defense", def: "The use of reasonable force to protect oneself or members of one's family." },
+    legalNote: "Nota: Il concetto di 'Reasonable force' è cruciale nei sistemi di Common Law."
+  },
+  {
+    id: 68,
+    category: "Diritto Penale",
+    it: { term: "Imputabilità", def: "Capacità di intendere e di volere al momento della commissione del fatto." },
+    es: { term: "Imputabilidad", def: "Capacidad de una persona para comprender la ilicitud de su conducta." },
+    en: { term: "Culpability / Criminal responsibility", def: "A measure of the degree to which an agent, such as a person, can be held morally or legally responsible." },
+    legalNote: "Nota: Legata spesso alla 'Insanity defense' nei processi anglosassoni."
+  },
+  {
+    id: 69,
+    category: "Procedura Penale",
+    it: { term: "Udienza", def: "Periodo di tempo in cui un tribunale ascolta le prove o discute una causa." },
+    es: { term: "Vista / Audiencia", def: "Acto público en el que se presentan las pruebas ante un juez." },
+    en: { term: "Hearing / Trial", def: "A proceeding before a court or other decision-making body." },
+    legalNote: "Nota: 'Trial' indica il dibattimento vero e proprio, 'Hearing' è più generico."
+  },
+  {
+    id: 70,
+    category: "Diritto Penale",
+    it: { term: "Falsa testimonianza", def: "Affermare il falso o negare il vero come testimone davanti all'autorità giudiziaria." },
+    es: { term: "Falso testimonio", def: "Delito cometido por un testigo que falta a la verdad en un juicio." },
+    en: { term: "Perjury", def: "The offense of willfully telling an untruth in a court after having taken an oath." },
+    legalNote: null
+  },
+  {
+    id: 71,
+    category: "Diritto Penale",
+    it: { term: "Evasione fiscale", def: "Sottrazione fraudolenta al pagamento delle imposte." },
+    es: { term: "Evasión fiscal", def: "Impago de impuestos de forma consciente y voluntaria." },
+    en: { term: "Tax evasion", def: "The illegal non-payment or underpayment of taxes." },
+    legalNote: "Nota: Da distinguere dal 'Tax avoidance' (elusione), che è l'uso legale del sistema per pagare meno tasse."
+  },
+  {
+    id: 72,
+    category: "Procedura Penale",
+    it: { term: "Patteggiamento", def: "Accordo tra imputato e PM per l'applicazione di una pena ridotta." },
+    es: { term: "Conformidad", def: "Acuerdo entre el acusado y el fiscal para evitar el juicio aceptando una pena." },
+    en: { term: "Plea bargain", def: "An arrangement between a prosecutor and a defendant whereby the defendant pleads guilty to a lesser charge." },
+    legalNote: "Nota: Negli USA circa il 90% delle cause penali si chiude con un 'Plea bargain'."
+  },
+  {
+    id: 73,
+    category: "Diritto Penale",
+    it: { term: "Querela", def: "Manifestazione di volontà con cui la persona offesa chiede la punizione del colpevole." },
+    es: { term: "Querella", def: "Acto procesal por el que se comunica un delito y se solicita ser parte en el proceso." },
+    en: { term: "Formal complaint / Criminal complaint", def: "A legal document filed by the victim to initiate criminal proceedings." },
+    legalNote: null
+  },
+  {
+    id: 74,
+    category: "Diritto Penale",
+    it: { term: "Estorsione", def: "Costringere qualcuno a fare o ad omettere qualcosa per trarre un ingiusto profitto." },
+    es: { term: "Extorsión", def: "Obligar a una persona con violencia o intimidación a realizar un acto jurídico en perjuicio proprio." },
+    en: { term: "Extortion / Blackmail", def: "The practice of obtaining something, especially money, through force or threats." },
+    legalNote: "Nota: 'Blackmail' si usa spesso quando la minaccia riguarda la rivelazione di segreti (ricatto)."
+  },
+  {
+    id: 75,
+    category: "Procedura Penale",
+    it: { term: "Interrogatorio", def: "Esame di una persona per ottenere informazioni o prove." },
+    es: { term: "Interrogatorio", def: "Serie de preguntas realizadas a una persona para esclarecer hechos." },
+    en: { term: "Interrogation / Examination", def: "The process of questioning by the police or in court." },
+    legalNote: "Nota: 'Police interrogation' è quella investigativa, 'Examination' quella in aula."
+  },
+  {
+    id: 76,
+    category: "Diritto Penale",
+    it: { term: "Sequestro di persona", def: "Privazione della libertà personale altrui." },
+    es: { term: "Secuestro", def: "Retener a una persona contra su voluntad de forma ilegal." },
+    en: { term: "Kidnapping / False imprisonment", def: "The unlawful removal or detention of a person against their will." },
+    legalNote: "Nota: 'Kidnapping' solitamente implica lo spostamento della vittima o un riscatto."
+  },
+  {
+    id: 77,
+    category: "Diritto Penale",
+    it: { term: "Calunnia", def: "Incolpare di un reato qualcuno che si sa essere innocente." },
+    es: { term: "Calumnia", def: "Imputación falsa de un delito hecha con conocimiento de su falsedad." },
+    en: { term: "False accusation / Malicious prosecution", def: "Knowingly accusing an innocent person of a crime." },
+    legalNote: null
+  },
+  {
+    id: 78,
+    category: "Diritto Penale",
+    it: { term: "Diffamazione", def: "Offendere l'altrui reputazione comunicando con più persone." },
+    es: { term: "Difamación / Injuria", def: "Comunicación de hechos falsos que dañan la reputazione de una persona." },
+    en: { term: "Defamation / Libel / Slander", def: "The action of damaging the good reputation of someone." },
+    legalNote: "Nota: 'Libel' è la diffamazione scritta, 'Slander' quella verbale."
+  },
+  {
+    id: 79,
+    category: "Procedura Penale",
+    it: { term: "Sentenza di assoluzione", def: "Provvedimento del giudice che dichiara l'imputato non colpevole." },
+    es: { term: "Sentencia absolutoria", def: "Decisión judicial que declara al acusado libre de toda responsabilidad." },
+    en: { term: "Acquittal", def: "A judgment that a person is not guilty of the crime with which they have been charged." },
+    legalNote: null
+  },
+  {
+    id: 80,
+    category: "Procedura Penale",
+    it: { term: "Sentenza di condanna", def: "Provvedimento del giudice che riconosce la colpevolezza e infligge la pena." },
+    es: { term: "Sentencia condenatoria", def: "Decisión judicial que impone una pena al acusado." },
+    en: { term: "Conviction", def: "A formal declaration by a verdict of a jury or the decision of a judge that someone is guilty." },
+    legalNote: null
+  },
+  {
+    id: 81,
+    category: "Diritto Penale",
+    it: { term: "Stalking (Atti persecutori)", def: "Comportamenti ripetuti di minaccia o molestia che causano ansia o paura." },
+    es: { term: "Acoso", def: "Comportamiento insistente y hostigante que altera la vida de una persona." },
+    en: { term: "Stalking", def: "The act of following or harassing a person in an aggressive or threatening manner." },
+    legalNote: null
+  },
+  {
+    id: 82,
+    category: "Procedura Penale",
+    it: { term: "Perquisizione", def: "Ispezione di persone o luoghi alla ricerca di prove o persone." },
+    es: { term: "Registro", def: "Examen judicial o policial de un lugar o persona." },
+    en: { term: "Search", def: "An examination of a person's body, property, or other area for evidence of a crime." },
+    legalNote: "Nota: Negli USA richiede solitamente un 'Search warrant' basato sulla 'Probable cause'."
+  },
+  {
+    id: 83,
+    category: "Diritto Penale",
+    it: { term: "Indulto", def: "Condono totale o parziale della pena o commutazione della stessa." },
+    es: { term: "Indulto", def: "Medida de gracia por la cual se perdona total o parcialmente una pena." },
+    en: { term: "Pardon / Clemency", def: "The action of forgiving or being forgiven for an error or offense." },
+    legalNote: "Nota: In Italia è concesso dal Parlamento, negli USA il 'Presidential Pardon' è prerogativa del Presidente."
+  },
+  {
+    id: 84,
+    category: "Diritto Penale",
+    it: { term: "Danno biologico", def: "Lesione temporanea o permanente all'integrità psico-fisica della persona." },
+    es: { term: "Daño corporal", def: "Lesión física o mental sufrida por una persona." },
+    en: { term: "Personal injury", def: "Injury to the body, mind, or emotions, as opposed to injury to property." },
+    legalNote: null
+  },
+  {
+    id: 85,
+    category: "Diritto Penale",
+    it: { term: "Spaccio di stupefacenti", def: "Vendita o cessione a terzi di sostanze psicotrope illegali." },
+    es: { term: "Tráfico de drogas", def: "Comercio de sustancias tóxicas o estupefacientes ilícitos." },
+    en: { term: "Drug trafficking / Dealing", def: "The trading or selling of illegal controlled substances." },
+    legalNote: null
+  },
+  {
+    id: 86,
+    category: "Diritto Penale",
+    it: { term: "Usura", def: "Prestito di denaro a tassi di interesse superiori al limite legale." },
+    es: { term: "Usura", def: "Préstamo con intereses excesivamente altos e ilegales." },
+    en: { term: "Usury / Loan sharking", def: "The illegal action of lending money at unreasonably high rates of interest." },
+    legalNote: "Nota: 'Loan sharking' è il termine colloquiale/penale per l'attività organizzata."
+  },
+  {
+    id: 87,
+    category: "Procedura Penale",
+    it: { term: "Testimone oculare", def: "Persona che ha assistito direttamente ai fatti oggetto del processo." },
+    es: { term: "Testigo presencial", def: "Persona que ha visto u oído directamente los hechos." },
+    en: { term: "Eyewitness", def: "A person who has personally seen something happen and can give a first-hand description of it." },
+    legalNote: null
+  },
+  {
+    id: 88,
+    category: "Diritto Penale",
+    it: { term: "Violenza sessuale", def: "Costringere qualcuno a compiere o subire atti sessuali con violenza o minaccia." },
+    es: { term: "Agresión sexual", def: "Acto de contenido sexual realizado sin el consentimiento de otra persona." },
+    en: { term: "Sexual assault / Rape", def: "Illegal sexual contact that involves force or occurs without consent." },
+    legalNote: "Nota: 'Rape' (stupro) è solitamente la forma più grave di 'Sexual assault'."
+  },
+  {
+    id: 89,
+    category: "Procedura Penale",
+    it: { term: "Corte d'Assise", def: "Tribunale composto da giudici togati e giudici popolari per i reati più gravi." },
+    es: { term: "Tribunal del Jurado", def: "Tribunal formado por ciudadanos legos encargados de dictar veredictos." },
+    en: { term: "Crown Court / Jury Court", def: "A court that deals with more serious criminal cases with a jury." },
+    legalNote: "Nota: La composizione mista italiana è diversa dalla 'Jury' anglosassone di soli cittadini."
+  },
+  {
+    id: 90,
+    category: "Diritto Penale",
+    it: { term: "Prescrizione del reato", def: "Estinzione del reato a causa del decorso del tempo." },
+    es: { term: "Prescripción del delito", def: "Extinción de la responsabilidad penal por el paso del tiempo." },
+    en: { term: "Statute of limitations", def: "A statute prescribing a period of limitation for the bringing of certain kinds of legal action." },
+    legalNote: "Nota: In molti sistemi USA, l'omicidio di primo grado non ha prescrizione."
+  },
+  {
+    id: 91,
+    category: "Diritto Penale",
+    it: { term: "Ricettazione", def: "Acquisto o ricezione di cose provenienti da delitto al fine di trarne profitto." },
+    es: { term: "Receptación", def: "Adquirir bienes con conocimiento de que provienen de un delito." },
+    en: { term: "Receiving stolen property", def: "Taking possession of goods that have been stolen by someone else." },
+    legalNote: null
+  },
+  {
+    id: 92,
+    category: "Diritto Penale",
+    it: { term: "Bancarotta fraudolenta", def: "Sottrazione di beni al fallimento per danneggiare i creditori." },
+    es: { term: "Bancarrota fraudulenta", def: "Delito cometido por un deudor que oculta bienes para no pagar." },
+    en: { term: "Fraudulent bankruptcy", def: "Concealing assets or destroying records to avoid payment to creditors." },
+    legalNote: null
+  },
+  {
+    id: 93,
+    category: "Diritto Penale",
+    it: { term: "Abuso di potere", def: "Esercizio arbitrario di funzioni pubbliche per fini privati o illeciti." },
+    es: { term: "Abuso de autoridad", def: "Uso indebido de las atribuciones por parte de un funcionario público." },
+    en: { term: "Abuse of authority", def: "The commission of an unlawful act, done in an official capacity." },
+    legalNote: null
+  },
+  {
+    id: 94,
+    category: "Diritto Penale",
+    it: { term: "Minaccia", def: "Prospettazione di un danno ingiusto a qualcuno." },
+    es: { term: "Amenazas", def: "Anuncio de un mal futuro con el fin de asustar o intimidar." },
+    en: { term: "Threat / Menace", def: "A statement of an intention to inflict pain, injury, damage, or other hostile action on someone." },
+    legalNote: null
+  },
+  {
+    id: 95,
+    category: "Diritto Penale",
+    it: { term: "Incendio doloso", def: "Cagionare intenzionalmente un incendio." },
+    es: { term: "Incendio provocado", def: "Acción de prender fuego a algo de forma intencionada e ilegal." },
+    en: { term: "Arson", def: "The criminal act of deliberately setting fire to property." },
+    legalNote: null
+  },
+  {
+    id: 96,
+    category: "Diritto Penale",
+    it: { term: "Omissione di soccorso", def: "Mancata assistenza a una persona in pericolo di vita o ferita." },
+    es: { term: "Omisión del deber de socorro", def: "No prestar ayuda a una persona que se halla desamparada y en peligro manifiesto." },
+    en: { term: "Failure to render aid / Good Samaritan laws", def: "Failing to assist a person who is in danger." },
+    legalNote: "Nota: Nei sistemi di Common Law, il dovere di soccorso è spesso meno stringente che in Europa."
+  },
+  {
+    id: 97,
+    category: "Diritto Penale",
+    it: { term: "Mala fede", def: "Consapevolezza di agire in modo contrario al diritto o ledendo i diritti altrui." },
+    es: { term: "Mala fe", def: "Convicción de actuar de forma ilícita o desleal." },
+    en: { term: "Bad faith / Mala fides", def: "A sustained form of deception which consists of entertaining or pretending to entertain one set of feelings while acting as if influenced by another." },
+    legalNote: null
+  },
+  {
+    id: 98,
+    category: "Procedura Penale",
+    it: { term: "Alibi", def: "Prova che l'imputato si trovava in un luogo diverso al momento del reato." },
+    es: { term: "Coartada", def: "Argumento de defensa que sitúa al acusado en un lugar distinto al del crimen." },
+    en: { term: "Alibi", def: "A claim or piece of evidence that one was elsewhere when an act is alleged to have taken place." },
+    legalNote: null
+  },
+  {
+    id: 99,
+    category: "Diritto Penale",
+    it: { term: "Delitto d'onore (Storico)", def: "Reato commesso per difendere l'onore familiare (abolito)." },
+    es: { term: "Crimen de honor", def: "Delito cometido por motivos de honor familiar (generalmente abolido)." },
+    en: { term: "Honor killing", def: "The murder of a member of a family by other members, due to the belief the victim has brought shame upon the family." },
+    legalNote: "Nota: In Italia è stato formalmente abolito solo nel 1981."
+  },
+  {
+    id: 100,
+    category: "Diritto Penale",
+    it: { term: "Violazione di domicilio", def: "Introdursi o trattenersi nell'altrui abitazione contro la volontà del titolare." },
+    es: { term: "Allanamiento de morada", def: "Entrada en domicilio ajeno sin permiso del morador." },
+    en: { term: "Trespassing / Breaking and entering", def: "Entering someone's land or property without permission." },
+    legalNote: "Nota: 'Breaking and entering' implica solitamente forzare una serratura o una finestra."
+  },
+  {
+    id: 101,
+    category: "Diritto Civile",
+    it: { term: "Capacità giuridica", def: "Attitudine a essere titolari di diritti e doveri, che si acquista alla nascita." },
+    es: { term: "Capacidad jurídica", def: "Aptitud para ser titular de derechos y obligaciones." },
+    en: { term: "Legal capacity", def: "The legal person's capability to have rights and obligations within a legal system." },
+    legalNote: null
+  },
+  {
+    id: 102,
+    category: "Diritto Civile",
+    it: { term: "Capacità di agire", def: "Capacità di compiere validamente atti giuridici, si acquista con la maggiore età." },
+    es: { term: "Capacidad de obrar", def: "Aptitud para ejercer derechos y cumplir obligaciones de forma autónoma." },
+    en: { term: "Legal competence / Capacity to act", def: "The ability to perform legally valid acts." },
+    legalNote: null
+  },
+  {
+    id: 103,
+    category: "Diritto Civile",
+    it: { term: "Usucapione", def: "Acquisto della proprietà di un bene attraverso il possesso prolungato nel tempo." },
+    es: { term: "Usucapión", def: "Modo de adquirir la propiedad por la posesión continuada durante el tiempo legal." },
+    en: { term: "Adverse possession", def: "A principle of real estate law that allows a person who possesses someone else's land for an extended period to claim legal title." },
+    legalNote: "Nota: Nel sistema inglese l'Adverse Possession richiede requisiti molto severi sull'intenzione di possedere (animus possidendi)."
+  },
+  {
+    id: 104,
+    category: "Contrattualistica",
+    it: { term: "Clausola vessatoria", def: "Clausola contrattuale che determina un eccessivo squilibrio a danno del consumatore." },
+    es: { term: "Cláusula abusiva", def: "Cláusula no negociada que causa un desequilibrio importante en perjuicio del consumidor." },
+    en: { term: "Unfair contract term", def: "A term in a contract that creates a significant imbalance in the parties' rights." },
+    legalNote: "Nota: Regolata a livello europeo dalla Direttiva 93/13/CEE."
+  },
+  {
+    id: 105,
+    category: "Contrattualistica",
+    it: { term: "Fideiussione", def: "Contratto con cui un soggetto garantisce l'adempimento di un'obbligazione altrui." },
+    es: { term: "Fianza / Aval", def: "Contrato de garantía por el cual un tercero se obliga a pagar si el deudor principal no lo hace." },
+    en: { term: "Suretyship / Guarantee", def: "A formal pledge to pay another person's debt or to perform another person's obligation in the case of default." },
+    legalNote: null
+  },
+  {
+    id: 106,
+    category: "Diritto Civile",
+    it: { term: "Obbligazione in solido", def: "Vincolo in cui più debitori sono obbligati per la medesima prestazione (solidarietà)." },
+    es: { term: "Obligación solidaria", def: "Vínculo jurídico donde cada deudor está obligado al pago total de la deuda." },
+    en: { term: "Joint and several liability", def: "A legal concept that makes each party to a lawsuit responsible for the entire amount of the damages." },
+    legalNote: null
+  },
+  {
+    id: 107,
+    category: "Diritto Civile",
+    it: { term: "Ipoteca", def: "Diritto reale di garanzia su beni immobili a favore di un creditore." },
+    es: { term: "Hipoteca", def: "Derecho real constituido en garantía de una obligación sobre bienes inmuebles." },
+    en: { term: "Mortgage", def: "A legal agreement by which a bank lends money at interest in exchange for taking title of the debtor's property." },
+    legalNote: null
+  },
+  {
+    id: 108,
+    category: "Diritto Civile",
+    it: { term: "Pegno", def: "Diritto reale di garanzia su beni mobili." },
+    es: { term: "Prenda", def: "Derecho real de garantía que recae sobre bienes muebles." },
+    en: { term: "Pledge / Pawn", def: "A bailment of personal property as security for a debt or engagement." },
+    legalNote: null
+  },
+  {
+    id: 109,
+    category: "Contrattualistica",
+    it: { term: "Recesso", def: "Diritto di sciogliersi unilateralmente da un contratto." },
+    es: { term: "Desistimiento / Rescisión", def: "Derecho a finalizar unilateralmente un contrato en determinadas circunstancias." },
+    en: { term: "Right of withdrawal / Termination", def: "The right to cancel a contract under certain conditions." },
+    legalNote: "Nota: In inglese 'Rescission' implica solitamente l'annullamento del contratto come se non fosse mai esistito."
+  },
+  {
+    id: 110,
+    category: "Contrattualistica",
+    it: { term: "Caparra confirmatoria", def: "Somma versata alla conclusione del contratto come garanzia dell'adempimento." },
+    es: { term: "Arras confirmatorias", def: "Cantidad de dinero entregada como garantía del cumplimiento del contrato." },
+    en: { term: "Earnest money / Security deposit", def: "Money paid to confirm a contract or as a guarantee." },
+    legalNote: null
+  },
+  {
+    id: 111,
+    category: "Diritto Civile",
+    it: { term: "Sinallagma", def: "Rapporto di corrispettività tra le prestazioni in un contratto." },
+    es: { term: "Sinalagma", def: "Nexo de reciprocidad entre las prestaciones de un contrato bilateral." },
+    en: { term: "Mutuality of obligation", def: "A relationship between the parties to a contract where both are bound to perform." },
+    legalNote: null
+  },
+  {
+    id: 112,
+    category: "Diritto Civile",
+    it: { term: "Responsabilità extracontrattuale", def: "Obbligo di risarcimento derivante da un fatto illecito (non da contratto)." },
+    es: { term: "Responsabilidad extracontractual", def: "Obligación de reparar un daño causado fuera del ámbito de un contrato." },
+    en: { term: "Tortious liability / Tort law", def: "Legal liability arising from a civil wrong, independent of a contract." },
+    legalNote: "Nota: In inglese questo campo è coperto dal 'Tort Law'."
+  },
+  {
+    id: 113,
+    category: "Diritto Civile",
+    it: { term: "Successione legittima", def: "Successione che avviene per legge in mancanza di testamento." },
+    es: { term: "Sucesión intestada", def: "Sucesión hereditaria que se produce en defecto de testamento." },
+    en: { term: "Intestate succession", def: "The distribution of an estate when a person dies without a will." },
+    legalNote: null
+  },
+  {
+    id: 114,
+    category: "Diritto Civile",
+    it: { term: "Legittimario", def: "Erede a cui la legge riserva obbligatoriamente una quota di eredità." },
+    es: { term: "Heredero forzoso", def: "Persona a la que la ley reserva una porción de la herencia que el testador no puede disponer." },
+    en: { term: "Forced heir", def: "A person who cannot be disinherited without legal cause." },
+    legalNote: "Nota: In molti sistemi di Common Law (es. Inghilterra) esiste quasi totale libertà di testamento, a differenza dell'Italia."
+  },
+  {
+    id: 115,
+    category: "Diritto Civile",
+    it: { term: "Comunione dei beni", def: "Regime patrimoniale per cui i beni acquistati durante il matrimonio appartengono a entrambi i coniugi." },
+    es: { term: "Sociedad de gananciales", def: "Régimen económico matrimonial donde se hacen comunes los beneficios obtenidos por cualquiera de los cónyuges." },
+    en: { term: "Community property", def: "Property owned jointly by a married couple." },
+    legalNote: null
+  },
+  {
+    id: 116,
+    category: "Diritto Civile",
+    it: { term: "Separazione dei beni", def: "Regime patrimoniale in cui ogni coniuge rimane titolare esclusivo dei propri acquisti." },
+    es: { term: "Separación de bienes", def: "Régimen en el que cada cónyuge conserva la propiedad de todos sus bienes." },
+    en: { term: "Separate property", def: "Property owned by one spouse before marriage or acquired during marriage by gift or inheritance." },
+    legalNote: null
+  },
+  {
+    id: 117,
+    category: "Contrattualistica",
+    it: { term: "Nullità del contratto", def: "Forma più grave di invalidità che rende il contratto privo di effetti sin dall'inizio." },
+    es: { term: "Nulidad absoluta", def: "Invalidez del contrato que impide que produzca efecto alguno." },
+    en: { term: "Void contract", def: "A formal agreement that is illegitimate and unenforceable from the moment it is created." },
+    legalNote: null
+  },
+  {
+    id: 118,
+    category: "Contrattualistica",
+    it: { term: "Annullabilità", def: "Invalidità meno grave che permette al contratto di produrre effetti finché non viene annullato." },
+    es: { term: "Anulabilidad", def: "Invalidez de un contrato que produce efectos mientras no sea impugnado." },
+    en: { term: "Voidable contract", def: "A valid contract that can be affirmed or rejected at the option of one of the parties." },
+    legalNote: null
+  },
+  {
+    id: 119,
+    category: "Diritto Civile",
+    it: { term: "Donazione", def: "Contratto con cui una parte arricchisce l'altra per spirito di liberalità." },
+    es: { term: "Donación", def: "Acto de liberalidad por el cual una persona dispone gratuitamente de una cosa en favor de otra." },
+    en: { term: "Gift", def: "The voluntary transfer of property from one person to another without consideration." },
+    legalNote: "Nota: Nel Common Law la mancanza di 'Consideration' (scambio) rende difficile far rispettare una promessa di donazione se non fatta tramite 'Deed' (atto formale)."
+  },
+  {
+    id: 120,
+    category: "Diritto Civile",
+    it: { term: "Danno emergente", def: "Perdita economica effettiva subita dal patrimonio del danneggiato." },
+    es: { term: "Daño emergente", def: "Pérdida real y efectiva de un patrimonio sufrida por una persona." },
+    en: { term: "Actual damages / Compensatory damages", def: "Money awarded to compensate for actual losses (e.g., out-of-pocket expenses)." },
+    legalNote: null
+  },
+  {
+    id: 121,
+    category: "Diritto Civile",
+    it: { term: "Lucro cessante", def: "Mancato guadagno derivante da un fatto illecito o inadempimento." },
+    es: { term: "Lucro cesante", def: "Ganancia que se ha dejado de obtener como consecuencia de un daño." },
+    en: { term: "Loss of profit / Consequential damages", def: "Loss of potential gain that would have been achieved if the injury had not occurred." },
+    legalNote: null
+  },
+  {
+    id: 122,
+    category: "Contrattualistica",
+    it: { term: "Foro competente", def: "Il tribunale incaricato di decidere su una determinata controversia." },
+    es: { term: "Jurisdicción competente", def: "Tribunal que tiene la autoridad legal para conocer un asunto." },
+    en: { term: "Venue / Proper court", def: "The proper or most convenient location for trial of a case." },
+    legalNote: null
+  },
+  {
+    id: 123,
+    category: "Diritto Civile",
+    it: { term: "Servitù di passaggio", def: "Peso imposto su un fondo per l'utilità di un altro fondo appartenente a diverso proprietario." },
+    es: { term: "Servidumbre de paso", def: "Derecho de tránsito por una finca ajena para acceder a otra." },
+    en: { term: "Easement / Right of way", def: "The right to use the land of another for a particular purpose." },
+    legalNote: null
+  },
+  {
+    id: 124,
+    category: "Diritto Civile",
+    it: { term: "Usufrutto", def: "Diritto di godere di un bene altrui rispettandone la destinazione economica." },
+    es: { term: "Usufructo", def: "Derecho a disfrutar bienes ajenos con la obligación de conservar su forma y sustancia." },
+    en: { term: "Usufruct / Life estate", def: "The right to use and enjoy the profits and advantages of another's property." },
+    legalNote: null
+  },
+  {
+    id: 125,
+    category: "Contrattualistica",
+    it: { term: "Proposta e accettazione", def: "Fasi fondamentali per la formazione del consenso contrattuale." },
+    es: { term: "Oferta y aceptación", def: "Actos que perfeccionan el contrato al coincidir las voluntades." },
+    en: { term: "Offer and acceptance", def: "The two elements that constitute a binding contract." },
+    legalNote: null
+  },
+  {
+    id: 126,
+    category: "Contrattualistica",
+    it: { term: "Mora del debitore", def: "Ritardo ingiustificato nell'adempimento dell'obbligazione." },
+    es: { term: "Mora del deudor", def: "Retraso culpable en el cumplimiento de una obligación." },
+    en: { term: "Default / Delay in payment", def: "Failure to fulfill an obligation, especially to repay a loan or appear in a court of law." },
+    legalNote: null
+  },
+  {
+    id: 127,
+    category: "Diritto Civile",
+    it: { term: "Colpa grave", def: "Violazione dei doveri minimi di diligenza che denota una particolare trascuratezza." },
+    es: { term: "Culpa grave", def: "Negligencia especialmente descuidada u omisión de la diligencia más elemental." },
+    en: { term: "Gross negligence", def: "A conscious and voluntary disregard of the need to use reasonable care." },
+    legalNote: null
+  },
+  {
+    id: 128,
+    category: "Contrattualistica",
+    it: { term: "Contratto di locazione", def: "Contratto con cui una parte si obbliga a far godere un bene all'altra per un dato tempo." },
+    es: { term: "Contrato de arrendamiento", def: "Contrato por el que se cede el uso de un bien a cambio de un precio." },
+    en: { term: "Lease agreement / Rental agreement", def: "A contract by which one party conveys land, property, services, etc., to another for a specified time." },
+    legalNote: null
+  },
+  {
+    id: 129,
+    category: "Diritto Civile",
+    it: { term: "Presunzione legale", def: "Conseguenza che la legge trae da un fatto noto per risalire a un fatto ignoto." },
+    es: { term: "Presunción legal", def: "Suposición de hecho que la ley establece como cierta salvo prueba en contrario." },
+    en: { term: "Legal presumption", def: "An inference as to the existence of one fact from the existence of some other fact." },
+    legalNote: null
+  },
+  {
+    id: 130,
+    category: "Contrattualistica",
+    it: { term: "Risoluzione del contratto", def: "Scioglimento del vincolo contrattuale dovuto a inadempimento, impossibilità o eccessiva onerosità." },
+    es: { term: "Resolución del contrato", def: "Extinción de un contrato por el incumplimiento de una de las partes." },
+    en: { term: "Termination of contract / Rescission", def: "The end of a contractual relationship before its natural expiration." },
+    legalNote: null
+  },
+  {
+    id: 131,
+    category: "Diritto Civile",
+    it: { term: "Patrimonio", def: "Insieme dei rapporti giuridici attivi e passivi che fanno capo a un soggetto." },
+    es: { term: "Patrimonio", def: "Conjunto de bienes, derechos y obligaciones de una persona." },
+    en: { term: "Estate / Assets", def: "The net worth of a person at any point in time dead or alive." },
+    legalNote: "Nota: 'Estate' è molto usato nel diritto successorio."
+  },
+  {
+    id: 132,
+    category: "Diritto Civile",
+    it: { term: "Soggetto di diritto", def: "Centro di imputazione di situazioni giuridiche soggettive." },
+    es: { term: "Sujeto de derecho", def: "Ente capaz de ser titular de derechos y obligaciones." },
+    en: { term: "Legal entity / Person", def: "Any being or body that is capable of having legal rights and duties." },
+    legalNote: null
+  },
+  {
+    id: 133,
+    category: "Contrattualistica",
+    it: { term: "Interpretazione del contratto", def: "Ricerca della comune intenzione delle parti al di là del senso letterale." },
+    es: { term: "Interpretación del contrato", def: "Determinación del sentido y alcance de las cláusulas de un acuerdo." },
+    en: { term: "Contractual interpretation / Construction", def: "The process of determining the meaning of words used in a contract." },
+    legalNote: null
+  },
+  {
+    id: 134,
+    category: "Diritto Civile",
+    it: { term: "Nudo proprietario", def: "Soggetto che ha la proprietà di un bene ma non il diritto di goderne (usufrutto altrui)." },
+    es: { term: "Nudo propietario", def: "Dueño de una cosa sobre la que otra persona tiene el usufructo." },
+    en: { term: "Bare owner / Remainder interest holder", def: "Someone who owns a property but does not have the right to live in it or use it." },
+    legalNote: null
+  },
+  {
+    id: 135,
+    category: "Contrattualistica",
+    it: { term: "Caparra penitenziale", def: "Corrispettivo fissato dalle parti per l'esercizio del diritto di recesso." },
+    es: { term: "Arras penitenciales", def: "Cantidad de dinero que permite a cualquiera de las partes desligarse del contrato perdiéndola." },
+    en: { term: "Cancellation fee / Forfeit money", def: "A sum of money paid as a penalty for ending a contract early." },
+    legalNote: null
+  },
+  {
+    id: 136,
+    category: "Diritto Civile",
+    it: { term: "Possesso vale titolo", def: "Principio per cui chi acquista un bene mobile in buona fede ne diventa proprietario." },
+    es: { term: "Posesión equivale a título", def: "Principio que presume la propiedad de bienes muebles por el mero hecho de su posesión." },
+    en: { term: "Possession is nine-tenths of the law", def: "A legal maxim that suggests that ownership is easier to maintain if one has possession." },
+    legalNote: "Nota: È più un detto che una norma codificata nel Common Law."
+  },
+  {
+    id: 137,
+    category: "Contrattualistica",
+    it: { term: "Autonomia contrattuale", def: "Libertà delle parti di determinare il contenuto del contratto nei limiti della legge." },
+    es: { term: "Autonomía de la voluntad", def: "Libertad de los particulares para pactar sus relaciones jurídicas." },
+    en: { term: "Freedom of contract", def: "The ability of parties to bargain and create the terms of their agreement as they desire." },
+    legalNote: null
+  },
+  {
+    id: 138,
+    category: "Diritto Civile",
+    it: { term: "Bene fungibile", def: "Bene che può essere sostituito con un altro dello stesso genere (es. denaro)." },
+    es: { term: "Bien fungible", def: "Bien mueble que puede ser sustituido por otro de la misma especie y calidad." },
+    en: { term: "Fungible good", def: "A good that is interchangeable with another good of the same type." },
+    legalNote: null
+  },
+  {
+    id: 139,
+    category: "Contrattualistica",
+    it: { term: "Cessione del credito", def: "Contratto con cui il creditore trasferisce il proprio diritto a un terzo." },
+    es: { term: "Cesión de crédito", def: "Acuerdo por el que un acreedor transfiere su derecho de cobro a otra persona." },
+    en: { term: "Assignment of debt", def: "A transfer of debt-related rights from one party to another." },
+    legalNote: null
+  },
+  {
+    id: 140,
+    category: "Diritto Civile",
+    it: { term: "Diligenza del buon padre di famiglia", def: "Parametro di condotta basato sulla cura e l'attenzione dell'uomo medio." },
+    es: { term: "Diligencia de un buen padre de familia", def: "Estándar de comportamiento diligente y responsable." },
+    en: { term: "Duty of care / Standard of the reasonable person", def: "The level of care and caution that a reasonable person would use in a given situation." },
+    legalNote: "Nota: Nel Common Law il termine tecnico è 'Reasonable person standard'."
+  },
+  {
+    id: 141,
+    category: "Diritto Civile",
+    it: { term: "Interdizione", def: "Provvedimento che priva un soggetto della capacità di agire per infermità mentale." },
+    es: { term: "Incapacitación", def: "Proceso judicial para declarar a una persona incapaz de gobernarse a sí misma." },
+    en: { term: "Guardianship / Interdiction", def: "The legal status of a person who is unable to manage their own affairs." },
+    legalNote: null
+  },
+  {
+    id: 142,
+    category: "Diritto Civile",
+    it: { term: "Curatore", def: "Soggetto nominato per assistere un inabilitato in determinati atti." },
+    es: { term: "Curador", def: "Persona encargada de complementar la capacidad de obrar de alguien con discapacidad." },
+    en: { term: "Conservator / Curator", def: "A person appointed by a judge to manage the financial affairs of another." },
+    legalNote: null
+  },
+  {
+    id: 143,
+    category: "Contrattualistica",
+    it: { term: "Contratto preliminare", def: "Contratto con cui le parti si obbligano a stipulare un contratto definitivo." },
+    es: { term: "Contrato de arras / Precontrato", def: "Acuerdo por el que las partes se comprometen a firmar un contrato futuro." },
+    en: { term: "Preliminary agreement / Preliminary contract", def: "An agreement made before the finalization of a definitive contract." },
+    legalNote: null
+  },
+  {
+    id: 144,
+    category: "Diritto Civile",
+    it: { term: "Atto pubblico", def: "Documento redatto da un notaio o pubblico ufficiale con particolari formalità." },
+    es: { term: "Escritura pública", def: "Documento autorizado por notario que goza de fe pública." },
+    en: { term: "Public deed / Notarial act", def: "A document formally executed before a notary public." },
+    legalNote: "Nota: Nel sistema USA/UK la figura del Notaio ha funzioni molto diverse e meno solenni che nel sistema latino."
+  },
+  {
+    id: 145,
+    category: "Diritto Civile",
+    it: { term: "Scrittura privata", def: "Documento redatto e sottoscritto dalle parti senza l'intervento di un pubblico ufficiale." },
+    es: { term: "Documento privado", def: "Acuerdo firmado por las partes sin intervención de notario." },
+    en: { term: "Private agreement / Contract under hand", def: "A document signed by the parties but not under seal or notarized." },
+    legalNote: null
+  },
+  {
+    id: 146,
+    category: "Contrattualistica",
+    it: { term: "Compensazione", def: "Estinzione di due debiti reciproci tra le stesse persone." },
+    es: { term: "Compensación", def: "Modo de extinguir obligaciones cuando dos personas son recíprocamente deudoras." },
+    en: { term: "Set-off", def: "A reduction in the amount owed to one party by the amount that party owes to the other." },
+    legalNote: null
+  },
+  {
+    id: 147,
+    category: "Diritto Civile",
+    it: { term: "Novazione", def: "Estinzione di un'obbligazione mediante la creazione di una nuova obbligazione." },
+    es: { term: "Novación", def: "Sustitución de una obligación por otra nueva que extingue la anterior." },
+    en: { term: "Novation", def: "The substitution of a new contract in place of an old one." },
+    legalNote: null
+  },
+  {
+    id: 148,
+    category: "Contrattualistica",
+    it: { term: "Mandato", def: "Contratto con cui una parte si obbliga a compiere atti giuridici per conto dell'altra." },
+    es: { term: "Contrato de mandato", def: "Contrato por el que una persona gestiona asuntos de otra por encargo." },
+    en: { term: "Agency agreement / Mandate", def: "A relationship where one person (agent) acts on behalf of another (principal)." },
+    legalNote: "Nota: 'Agency' è il termine più comune in inglese commerciale."
+  },
+  {
+    id: 149,
+    category: "Diritto Civile",
+    it: { term: "Azione revocatoria", def: "Azione con cui il creditore rende inefficaci gli atti di disposizione del debitore." },
+    es: { term: "Acción revocatoria / Pauliana", def: "Facultad del acreedor para impugnar actos del deudor que le perjudiquen." },
+    en: { term: "Fraudulent conveyance action", def: "A legal action to set aside a transfer of property made to hinder creditors." },
+    legalNote: null
+  },
+  {
+    id: 150,
+    category: "Diritto Civile",
+    it: { term: "Sinistro", def: "Evento avverso (incidente, danno) oggetto di copertura assicurativa." },
+    es: { term: "Siniestro", def: "Suceso que produce un daño garantizado en una póliza de seguros." },
+    en: { term: "Claim / Casualty", def: "An event that causes a loss and may be covered by an insurance policy." },
+    legalNote: null
+  },
+  {
+    id: 151,
+    category: "Diritto Societario",
+    it: { term: "Ragione sociale", def: "Il nome sotto cui una società di persone esercita la sua attività." },
+    es: { term: "Razón social", def: "Nombre oficial y legal de una empresa." },
+    en: { term: "Trade name / Business name", def: "The official name under which a company is registered and conducts business." },
+    legalNote: "Nota: In inglese si usa spesso l'acronimo DBA (Doing Business As) se il nome commerciale differisce da quello legale."
+  },
+  {
+    id: 152,
+    category: "Diritto Societario",
+    it: { term: "Società a responsabilità limitata (S.r.l.)", def: "Società in cui per le obbligazioni sociali risponde solo la società col suo patrimonio." },
+    es: { term: "Sociedad de Responsabilidad Limitada (S.L.)", def: "Sociedad mercantil donde la responsabilidad está limitada al capital aportado." },
+    en: { term: "Limited Liability Company (LLC)", def: "A corporate structure whereby the members of the company are not personally liable for the company's debts." },
+    legalNote: "Nota: Sebbene simili, la LLC americana ha una flessibilità fiscale molto diversa dalla S.r.l. europea."
+  },
+  {
+    id: 153,
+    category: "Diritto Societario",
+    it: { term: "Società per azioni (S.p.A.)", def: "Società di capitali il cui capitale è rappresentato da azioni." },
+    es: { term: "Sociedad Anónima (S.A.)", def: "Sociedad mercantil cuyo capital está dividido en acciones." },
+    en: { term: "Joint-stock company / Corporation", def: "A company whose stock is owned jointly by the shareholders." },
+    legalNote: "Nota: Negli USA il termine più comune è 'Corporation' (Inc.), nel Regno Unito è 'Public Limited Company' (PLC)."
+  },
+  {
+    id: 154,
+    category: "Diritto Commerciale",
+    it: { term: "Fallimento / Insolvenza", def: "Stato di un debitore che non è più in grado di soddisfare regolarmente le proprie obbligazioni." },
+    es: { term: "Concurso de acreedores / Quiebra", def: "Procedimiento legal cuando una persona o empresa no puede pagar sus deudas." },
+    en: { term: "Bankruptcy / Insolvency", def: "A legal proceeding involving a person or business that is unable to repay their outstanding debts." },
+    legalNote: "Nota: 'Insolvency' è lo stato finanziario, 'Bankruptcy' è il procedimento legale."
+  },
+  {
+    id: 155,
+    category: "Diritto del Lavoro",
+    it: { term: "Licenziamento senza giusta causa", def: "Risoluzione del rapporto di lavoro da parte del datore senza motivo valido." },
+    es: { term: "Despido improcedente", def: "Extinción del contrato por decisión del empresario sin causa justificada." },
+    en: { term: "Unfair dismissal / Wrongful termination", def: "An act in which an employee's contract of employment is terminated by their employer in breach of the law." },
+    legalNote: "Nota: Negli USA vige spesso la dottrina 'At-will employment', dove il licenziamento può avvenire senza motivo, salvo discriminazioni."
+  },
+  {
+    id: 156,
+    category: "Diritto Societario",
+    it: { term: "Consiglio di Amministrazione (CdA)", def: "Organo collegiale a cui è affidata la gestione della società." },
+    es: { term: "Consejo de Administración", def: "Órgano colegiado que dirige y administra una sociedad mercantil." },
+    en: { term: "Board of Directors (BoD)", def: "A group of individuals elected by shareholders to represent their interests and manage the company." },
+    legalNote: null
+  },
+  {
+    id: 157,
+    category: "Diritto Commerciale",
+    it: { term: "Marchio registrato", def: "Segno distintivo di prodotti o servizi che gode di tutela legale." },
+    es: { term: "Marca registrada", def: "Signo que identifica un producto y está protegido legalmente." },
+    en: { term: "Registered Trademark", def: "A symbol, word, or words legally registered as representing a company or product." },
+    legalNote: "Nota: Identificato dal simbolo ® dopo la registrazione."
+  },
+  {
+    id: 158,
+    category: "Diritto Commerciale",
+    it: { term: "Brevetto", def: "Diritto esclusivo di sfruttamento di un'invenzione per un periodo limitato." },
+    es: { term: "Patente", def: "Título que otorga el derecho exclusivo de explotación de una invención." },
+    en: { term: "Patent", def: "A government authority or license conferring a right for a set period to exclude others from making, using, or selling an invention." },
+    legalNote: null
+  },
+  {
+    id: 159,
+    category: "Diritto Societario",
+    it: { term: "Fusione e Acquisizione", def: "Operazioni di finanza straordinaria per l'unione di due o più società." },
+    es: { term: "Fusiones y Adquisiciones (M&A)", def: "Transacciones de la propiedad de empresas u otras organizaciones." },
+    en: { term: "Mergers and Acquisitions (M&A)", def: "The area of corporate strategy and finance dealing with the merging and acquiring of different companies." },
+    legalNote: null
+  },
+  {
+    id: 160,
+    category: "Diritto del Lavoro",
+    it: { term: "Contratto a tempo indeterminato", def: "Contratto di lavoro senza una scadenza prestabilita." },
+    es: { term: "Contrato indefinido", def: "Acuerdo laboral que no tiene una fecha de finalización determinada." },
+    en: { term: "Permanent contract / Open-ended contract", def: "An employment contract that does not have an expiration date." },
+    legalNote: null
+  },
+  {
+    id: 161,
+    category: "Diritto del Lavoro",
+    it: { term: "Tredicesima mensilità", def: "Retribuzione aggiuntiva corrisposta solitamente nel periodo natalizio." },
+    es: { term: "Paga extraordinaria / Navidad", def: "Remuneración adicional que el trabajador recibe generalmente en Navidad." },
+    en: { term: "13th-month pay / Christmas bonus", def: "A double salary payment often mandated by law or contract in some jurisdictions." },
+    legalNote: "Nota: Molto comune in Italia e Spagna, ma rara negli USA se non come 'discretionary bonus'."
+  },
+  {
+    id: 162,
+    category: "Diritto Commerciale",
+    it: { term: "Concorrenza sleale", def: "Atti contrari ai principi della correttezza professionale per danneggiare un concorrente." },
+    es: { term: "Competencia desleal", def: "Prácticas comerciales deshonestas para obtener ventaja sobre los competidores." },
+    en: { term: "Unfair competition", def: "Deceptive or fraudulent business practices that cause economic harm to other businesses." },
+    legalNote: null
+  },
+  {
+    id: 163,
+    category: "Diritto Societario",
+    it: { term: "Assemblea dei soci", def: "Organo sovrano della società in cui i soci prendono le decisioni principali." },
+    es: { term: "Junta General de Accionistas", def: "Órgano donde los socios deliberan y votan sobre los asuntos de la sociedad." },
+    en: { term: "Shareholders' Meeting", def: "A meeting of the shareholders of a corporation to elect directors and transact other business." },
+    legalNote: "Nota: Si distingue tra 'Ordinary' (ordinaria) e 'Extraordinary' (straordinaria)."
+  },
+  {
+    id: 164,
+    category: "Diritto Societario",
+    it: { term: "Capitale sociale", def: "Valore dei conferimenti dei soci al momento della costituzione." },
+    es: { term: "Capital social", def: "Importe monetario de las aportaciones de los socios a una sociedad." },
+    en: { term: "Share capital / Equity capital", def: "The portion of a corporation's equity that has been obtained by issuing shares." },
+    legalNote: null
+  },
+  {
+    id: 165,
+    category: "Diritto Commerciale",
+    it: { term: "Titoli di stato", def: "Obbligazioni emesse dai governi per finanziare la spesa pubblica." },
+    es: { term: "Bonos del Estado", def: "Títulos de deuda pública emitidos por el Tesoro." },
+    en: { term: "Government bonds / Treasury bonds", def: "Debt securities issued by a government to support government spending." },
+    legalNote: null
+  },
+  {
+    id: 166,
+    category: "Diritto del Lavoro",
+    it: { term: "Dimissioni", def: "Atto unilaterale con cui il lavoratore scioglie il rapporto di lavoro." },
+    es: { term: "Baja voluntaria / Dimisión", def: "Decisión unilateral del trabajador de finalizar la relación laboral." },
+    en: { term: "Resignation", def: "The act of voluntarily leaving a job or office." },
+    legalNote: null
+  },
+  {
+    id: 167,
+    category: "Diritto del Lavoro",
+    it: { term: "Trattamento di Fine Rapporto (TFR)", def: "Somma corrisposta al lavoratore al momento della cessazione del rapporto." },
+    es: { term: "Indemnización por fin de contrato / Finiquito", def: "Cantidad abonada al trabajador al finalizar la relación laboral." },
+    en: { term: "Severance pay / Termination indemnity", def: "Amount paid to an employee upon leaving an organization." },
+    legalNote: "Nota: Il TFR è una peculiarità italiana (salario differito); il 'Severance pay' anglosassone è spesso legato a licenziamenti economici."
+  },
+  {
+    id: 168,
+    category: "Diritto Societario",
+    it: { term: "Sussidiaria / Controllata", def: "Società la cui gestione è sotto il controllo di un'altra società (capogruppo)." },
+    es: { term: "Filial", def: "Entidad controlada por otra empresa denominada matriz." },
+    en: { term: "Subsidiary", def: "A company that is owned or controlled by another company, which is called the parent company." },
+    legalNote: null
+  },
+  {
+    id: 169,
+    category: "Diritto Commerciale",
+    it: { term: "Inadempimento", def: "Mancata o inesatta esecuzione della prestazione dovuta." },
+    es: { term: "Incumplimiento", def: "Falta de ejecución de una obligación contractual." },
+    en: { term: "Breach of contract / Default", def: "The failure, without legal excuse, to perform any promise that forms all or part of the contract." },
+    legalNote: null
+  },
+  {
+    id: 170,
+    category: "Diritto Societario",
+    it: { term: "Liquidazione", def: "Fase in cui si vendono i beni sociali per pagare i debiti e chiudere la società." },
+    es: { term: "Liquidación", def: "Proceso de enajenación de activos para cancelar pasivos antes de disolver una sociedad." },
+    en: { term: "Liquidation / Winding up", def: "The process of bringing a business to an end and distributing its assets to claimants." },
+    legalNote: null
+  },
+  {
+    id: 171,
+    category: "Diritto del Lavoro",
+    it: { term: "Sciopero", def: "Astensione collettiva dal lavoro per motivi di interesse professionale." },
+    es: { term: "Huelga", def: "Interrupción colectiva de la actividad laboral por parte de los trabajadores." },
+    en: { term: "Strike", def: "A refusal to work organized by a body of employees as a form of protest." },
+    legalNote: null
+  },
+  {
+    id: 172,
+    category: "Diritto Commerciale",
+    it: { term: "Lettera di credito", def: "Documento bancario che garantisce il pagamento a un venditore." },
+    es: { term: "Carta de crédito", def: "Instrumento de pago mediante el cual un banco garantiza el abono al vendedor." },
+    en: { term: "Letter of Credit (L/C)", def: "A letter from a bank guaranteeing that a buyer's payment to a seller will be received on time and for the correct amount." },
+    legalNote: null
+  },
+  {
+    id: 173,
+    category: "Diritto Societario",
+    it: { term: "Statuto sociale", def: "Documento che contiene le regole di funzionamento della società." },
+    es: { term: "Estatutos sociales", def: "Normas internas que regulan el funcionamiento de una sociedad." },
+    en: { term: "Articles of Association / Bylaws", def: "A document that specifies the regulations for a company's operations." },
+    legalNote: "Nota: Nel Regno Unito si usa 'Articles of Association', negli USA 'Bylaws'."
+  },
+  {
+    id: 174,
+    category: "Diritto del Lavoro",
+    it: { term: "Periodo di prova", def: "Fase iniziale del rapporto di lavoro in cui le parti valutano la convenienza della collaborazione." },
+    es: { term: "Período de prueba", def: "Tiempo concertado al inicio del contrato para comprobar la aptitud del trabajador." },
+    en: { term: "Probationary period", def: "An initial period of employment during which an employee is evaluated." },
+    legalNote: null
+  },
+  {
+    id: 175,
+    category: "Diritto Commerciale",
+    it: { term: "Franchising", def: "Contratto di affiliazione commerciale per la distribuzione di beni o servizi." },
+    es: { term: "Franquicia", def: "Sistema de comercio por el que una empresa cede el derecho a explotar su marca." },
+    en: { term: "Franchising", def: "An agreement where one party grants another the right to use its trademark and business model." },
+    legalNote: null
+  },
+  {
+    id: 176,
+    category: "Diritto Societario",
+    it: { term: "Socio accomandante", def: "Socio che risponde delle obbligazioni sociali solo nei limiti della sua quota." },
+    es: { term: "Socio comanditario", def: "Socio que tiene responsabilidad limitada al capital aportado en una sociedad comanditaria." },
+    en: { term: "Limited partner", def: "A partner in a company whose liability is limited to the extent of their share of ownership." },
+    legalNote: null
+  },
+  {
+    id: 177,
+    category: "Diritto Societario",
+    it: { term: "Socio accomandatario", def: "Socio che risponde illimitatamente e solidalmente per le obbligazioni sociali." },
+    es: { term: "Socio colectivo / gestor", def: "Socio que responde personal e ilimitadamente de las deudas sociales." },
+    en: { term: "General partner", def: "A person who joins with at least one other person to own and operate a business and has unlimited liability." },
+    legalNote: null
+  },
+  {
+    id: 178,
+    category: "Diritto Commerciale",
+    it: { term: "Insider Trading", def: "Sfruttamento di informazioni riservate per compiere operazioni in borsa." },
+    es: { term: "Uso de información privilegiada", def: "Delito consistente en obtener beneficio bursátil usando datos no públicos." },
+    en: { term: "Insider trading", def: "The illegal practice of trading on the stock exchange to one's own advantage through having access to confidential information." },
+    legalNote: null
+  },
+  {
+    id: 179,
+    category: "Diritto del Lavoro",
+    it: { term: "Soggetto sindacale", def: "Organizzazione che rappresenta gli interessi dei lavoratori." },
+    es: { term: "Sindicato", def: "Asociación de trabajadores para la defensa de sus intereses." },
+    en: { term: "Trade union / Labor union", def: "An organized association of workers formed to protect and further their rights and interests." },
+    legalNote: null
+  },
+  {
+    id: 180,
+    category: "Diritto del Lavoro",
+    it: { term: "Contrattazione collettiva", def: "Negoziazione tra sindacati e datori di lavoro per stabilire le condizioni salariali." },
+    es: { term: "Convenio colectivo", def: "Acuerdo entre representantes de trabajadores y empresarios sobre condiciones de trabajo." },
+    en: { term: "Collective bargaining", def: "Negotiation of wages and other conditions of employment by an organized body of employees." },
+    legalNote: null
+  },
+  {
+    id: 181,
+    category: "Diritto Societario",
+    it: { term: "Aumento di capitale", def: "Operazione per incrementare il capitale sociale mediante nuovi conferimenti o riserve." },
+    es: { term: "Ampliación de capital", def: "Operación financiera para incrementar los recursos propios de una sociedad." },
+    en: { term: "Capital increase / Rights issue", def: "The process of raising more funds by issuing new shares." },
+    legalNote: null
+  },
+  {
+    id: 182,
+    category: "Diritto Commerciale",
+    it: { term: "Dumping", def: "Vendita di prodotti a prezzi inferiori ai costi di produzione per eliminare la concorrenza." },
+    es: { term: "Dumping", def: "Práctica de vender a precios inferiores al costo para dominar el mercado." },
+    en: { term: "Dumping", def: "The export by a country or company of a product at a price that is lower in the foreign market than the price charged in the exporter's domestic market." },
+    legalNote: null
+  },
+  {
+    id: 183,
+    category: "Diritto Societario",
+    it: { term: "Prestanome", def: "Persona che figura formalmente come titolare di un diritto per conto altrui." },
+    es: { term: "Testaferro", def: "Persona que presta su nombre en un contrato o negocio que pertenece a otro." },
+    en: { term: "Straw man / Frontman / Nominee", def: "A person who acts as a cover for another's business or political activities." },
+    legalNote: null
+  },
+  {
+    id: 184,
+    category: "Diritto Commerciale",
+    it: { term: "Codice fiscale", def: "Codice identificativo per fini tributari." },
+    es: { term: "NIF (Número de Identificación Fiscal)", def: "Código que identifica a las personas físicas o jurídicas ante la Hacienda." },
+    en: { term: "Tax ID / Fiscal Code", def: "An identifying number used for tax purposes." },
+    legalNote: "Nota: Negli USA si usa spesso il SSN (Social Security Number) per le persone fisiche."
+  },
+  {
+    id: 185,
+    category: "Diritto del Lavoro",
+    it: { term: "Mobbing", def: "Comportamenti persecutori protratti nel tempo da parte di colleghi o superiori." },
+    es: { term: "Acoso laboral / Mobbing", def: "Hostigamiento psicológico en el ámbito del trabajo." },
+    en: { term: "Workplace bullying / Mobbing", def: "Psychological harassment or social exclusion in a professional context." },
+    legalNote: null
+  },
+  {
+    id: 186,
+    category: "Diritto Societario",
+    it: { term: "Fiducia / Trust", def: "Rapporto in cui un soggetto gestisce beni per conto di un beneficiario." },
+    es: { term: "Fideicomiso", def: "Contrato por el cual se transmiten bienes a un fiduciario en beneficio de un tercero." },
+    en: { term: "Trust", def: "A fiduciary relationship in which one party, known as a trustor, gives another party, the trustee, the right to hold title to property or assets for the benefit of a third party." },
+    legalNote: "Nota: Il 'Trust' è un istituto cardine del Common Law, recepito in Italia tramite la Convenzione dell'Aja."
+  },
+  {
+    id: 187,
+    category: "Diritto del Lavoro",
+    it: { term: "Infortunio sul lavoro", def: "Evento lesivo occorso al lavoratore durante lo svolgimento dell'attività." },
+    es: { term: "Accidente laboral", def: "Lesión sufrida por el trabajador con ocasión o por consecuencia del trabajo." },
+    en: { term: "Workplace accident / Occupational injury", def: "An injury resulting from a work-related event." },
+    legalNote: null
+  },
+  {
+    id: 188,
+    category: "Diritto Commerciale",
+    it: { term: "Leasing", def: "Contratto di locazione finanziaria con opzione di acquisto finale." },
+    es: { term: "Arrendamiento financiero / Leasing", def: "Contrato de alquiler con opción de compra de un bien." },
+    en: { term: "Financial leasing", def: "A way of providing finance where the owner of an asset allows another person to use the asset for a periodic fee." },
+    legalNote: null
+  },
+  {
+    id: 189,
+    category: "Diritto Commerciale",
+    it: { term: "Solvibilità", def: "Capacità del debitore di adempiere alle proprie obbligazioni finanziarie." },
+    es: { term: "Solvencia", def: "Capacidad de una persona física o jurídica para cumplir sus obligaciones financieras." },
+    en: { term: "Solvency", def: "The ability of a company to meet its long-term debts and financial obligations." },
+    legalNote: null
+  },
+  {
+    id: 190,
+    category: "Diritto Societario",
+    it: { term: "Holding", def: "Società che possiede partecipazioni in altre società per controllarne la gestione." },
+    es: { term: "Sociedad holding", def: "Sociedad cuya actividad principal es la tenencia de acciones de otras empresas." },
+    en: { term: "Holding company", def: "A company created to buy and possess the shares of other companies, which it then controls." },
+    legalNote: null
+  },
+  {
+    id: 191,
+    category: "Diritto del Lavoro",
+    it: { term: "Lavoro autonomo", def: "Attività lavorativa prestata senza vincolo di subordinazione." },
+    es: { term: "Trabajo autónomo", def: "Actividad económica realizada de forma habitual y directa por cuenta propia." },
+    en: { term: "Self-employment / Freelancing", def: "Working for oneself as a freelancer or the owner of a business rather than for an employer." },
+    legalNote: null
+  },
+  {
+    id: 192,
+    category: "Diritto Commerciale",
+    it: { term: "Diritto d'autore", def: "Tutela delle opere dell'ingegno di carattere creativo." },
+    es: { term: "Derecho de autor", def: "Conjunto de normas que protegen la autoría de obras literarias y artísticas." },
+    en: { term: "Copyright", def: "The exclusive legal right, given to an originator or an assignee to print, publish, perform, film, or record artistic material." },
+    legalNote: "Nota: In inglese 'Copyright' è più legato al diritto di copia, in italiano 'Diritto d'autore' include forti diritti morali inalienabili."
+  },
+  {
+    id: 193,
+    category: "Diritto del Lavoro",
+    it: { term: "Previdenza sociale", def: "Sistema di tutele pubbliche per i lavoratori (pensioni, assistenza)." },
+    es: { term: "Seguridad Social", def: "Sistema público de prestaciones frente a contingencias como enfermedad o jubilación." },
+    en: { term: "Social Security", def: "A federal or state program of assistance to people with inadequate or no income." },
+    legalNote: null
+  },
+  {
+    id: 194,
+    category: "Diritto Societario",
+    it: { term: "Conflitto d'interessi", def: "Situazione in cui l'interesse privato contrasta con i doveri d'ufficio o societari." },
+    es: { term: "Conflicto de intereses", def: "Situación en la que intereses personales interfieren con el cumplimiento de deberes profesionales." },
+    en: { term: "Conflict of interest", def: "A situation in which the concerns or aims of two different parties are incompatible." },
+    legalNote: null
+  },
+  {
+    id: 195,
+    category: "Diritto Commerciale",
+    it: { term: "Vizio occulto", def: "Difetto della cosa venduta non facilmente riconoscibile al momento dell'acquisto." },
+    es: { term: "Vicio oculto", def: "Defecto grave en una cosa venduta que no estaba a la vista al comprarla." },
+    en: { term: "Latent defect / Hidden defect", def: "A fault in property that could not have been discovered by a reasonably thorough inspection." },
+    legalNote: "Nota: Nel Common Law si applica spesso la regola 'Caveat Emptor' (stia in guardia il compratore)."
+  },
+  {
+    id: 196,
+    category: "Diritto del Lavoro",
+    it: { term: "Smart working (Lavoro agile)", def: "Modalità flessibile di esecuzione della prestazione lavorativa senza vincoli d'orario o di luogo." },
+    es: { term: "Teletrabajo", def: "Trabajo realizado a distancia utilizando tecnologías de la información." },
+    en: { term: "Remote work / Smart working", def: "The practice of working from home or elsewhere rather than in an office." },
+    legalNote: "Nota: 'Smart working' è un termine pseudo-inglese usato in Italia; nei paesi anglosassoni si dice 'Remote work'."
+  },
+  {
+    id: 197,
+    category: "Diritto Societario",
+    it: { term: "Dividendo", def: "Quota degli utili societari distribuita agli azionisti." },
+    es: { term: "Dividendo", def: "Parte del beneficio de una empresa que se reparte entre sus accionistas." },
+    en: { term: "Dividend", def: "A sum of money paid regularly by a company to its shareholders out of its profits." },
+    legalNote: null
+  },
+  {
+    id: 198,
+    category: "Diritto Commerciale",
+    it: { term: "Mandato di pagamento", def: "Ordine di pagare una determinata somma a un soggetto." },
+    es: { term: "Orden de pago", def: "Instrucción de un cliente a su banco para pagar a un beneficiario." },
+    en: { term: "Payment order", def: "A direct instruction from a bank's client to pay a third party." },
+    legalNote: null
+  },
+  {
+    id: 199,
+    category: "Diritto Societario",
+    it: { term: "Rapporto annuale", def: "Documento informativo sull'andamento della società nell'ultimo anno." },
+    es: { term: "Informe anual / Memoria", def: "Documento que resume la actividad y situación financiera de una empresa." },
+    en: { term: "Annual report", def: "A comprehensive report on a company's activities throughout the preceding year." },
+    legalNote: null
+  },
+  {
+    id: 200,
+    category: "Diritto del Lavoro",
+    it: { term: "Sospensione dal lavoro", def: "Interruzione temporanea del rapporto di lavoro per motivi disciplinari o economici." },
+    es: { term: "Suspensión de empleo y sueldo", def: "Medida disciplinaria que interrumpe la actividad del trabajador y su cobro." },
+    en: { term: "Suspension from work / Furlough", def: "The temporary removal of an employee from their duties." },
+    legalNote: "Nota: 'Furlough' è diventato un termine comune durante la pandemia per le sospensioni economiche."
+  },
+  {
+    id: 201,
+    category: "Diritto Amministrativo",
+    it: { term: "Atto amministrativo", def: "Manifestazione di volontà della Pubblica Amministrazione nell'esercizio delle sue funzioni." },
+    es: { term: "Acto administrativo", def: "Declaración voluntaria de la Administración Pública que produce efectos jurídicos." },
+    en: { term: "Administrative act", def: "A decision or action taken by an administrative authority." },
+    legalNote: null
+  },
+  {
+    id: 202,
+    category: "Diritto Amministrativo",
+    it: { term: "Eccesso di potere", def: "Vizio dell'atto amministrativo che consiste nell'uso scorretto del potere discrezionale." },
+    es: { term: "Desviación de poder", def: "Vicio del acto administrativo cuando la autoridad lo ejerce para un fin distinto al previsto." },
+    en: { term: "Abuse of discretion / Misuse of power", def: "When a public official uses their power for purposes other than those for which it was granted." },
+    legalNote: "Nota: Nel Common Law si parla spesso di 'Ultra Vires' (oltre i poteri)."
+  },
+  {
+    id: 203,
+    category: "Diritto Costituzionale",
+    it: { term: "Separazione dei poteri", def: "Principio per cui le funzioni legislativa, esecutiva e giudiziaria devono essere separate." },
+    es: { term: "División de poderes", def: "Principio político que reparte las funciones del Estado en órganos diferentes." },
+    en: { term: "Separation of powers / Checks and balances", def: "The division of a state's government into branches, each with separate, independent powers." },
+    legalNote: "Nota: 'Checks and balances' è l'espressione tipica USA per indicare il controllo reciproco tra i poteri."
+  },
+  {
+    id: 204,
+    category: "Diritto Costituzionale",
+    it: { term: "Corte Costituzionale", def: "Organo incaricato di giudicare la legittimità costituzionale delle leggi." },
+    es: { term: "Tribunal Constitucional", def: "Órgano supremo encargado de garantizar la primacía de la Constitución." },
+    en: { term: "Constitutional Court / Supreme Court", def: "A high court that deals primarily with constitutional law." },
+    legalNote: "Nota: Negli USA la funzione è svolta dalla Supreme Court, che però è anche giudice di ultima istanza generale."
+  },
+  {
+    id: 205,
+    category: "Diritto Amministrativo",
+    it: { term: "Pubblica Amministrazione (PA)", def: "Insieme degli organi che provvedono alla cura degli interessi pubblici." },
+    es: { term: "Administración Pública", def: "Conjunto de organismos que gestionan los intereses del Estado." },
+    en: { term: "Public Administration / Government agencies", def: "The implementation of government policy and the management of public programs." },
+    legalNote: null
+  },
+  {
+    id: 206,
+    category: "Diritto Costituzionale",
+    it: { term: "Referendum", def: "Appello diretto al popolo affinché si pronunci su una legge o una questione politica." },
+    es: { term: "Referéndum", def: "Procedimiento jurídico por el que se somete al voto popular una ley." },
+    en: { term: "Referendum / Plebiscite", def: "A general vote by the electorate on a single political question that has been referred to them for a direct decision." },
+    legalNote: null
+  },
+  {
+    id: 207,
+    category: "Procedura",
+    it: { term: "Giurisdizione", def: "Potere di amministrare la giustizia attribuito ai giudici." },
+    es: { term: "Jurisdicción", def: "Potestad del Estado para juzgar y hacer ejecutar lo juzgado." },
+    en: { term: "Jurisdiction", def: "The official power to make legal decisions and judgments." },
+    legalNote: null
+  },
+  {
+    id: 208,
+    category: "Procedura",
+    it: { term: "Passato in giudicato", def: "Sentenza che non può più essere impugnata con i mezzi ordinari." },
+    es: { term: "Cosa juzgada / Sentencia firme", def: "Sentencia que adquiere carácter definitivo al no admitir más recursos." },
+    en: { term: "Res Judicata / Final judgment", def: "A matter that has been adjudicated by a competent court and may not be pursued further." },
+    legalNote: "Nota: 'Res Judicata' è il termine latino usato universalmente in ambito internazionale."
+  },
+  {
+    id: 209,
+    category: "Diritto Costituzionale",
+    it: { term: "Stato di diritto", def: "Forma di Stato in cui il potere è limitato dalla legge e i diritti sono garantiti." },
+    es: { term: "Estado de Derecho", def: "Principio de gobernanza por el que todas las personas e instituciones están sometidas a la ley." },
+    en: { term: "Rule of Law", def: "The restriction of the arbitrary exercise of power by subordinating it to well-defined and established laws." },
+    legalNote: null
+  },
+  {
+    id: 210,
+    category: "Diritto Amministrativo",
+    it: { term: "Appalto pubblico", def: "Contratto tra un'amministrazione e un privato per la fornitura di beni o servizi." },
+    es: { term: "Contratación pública / Licitación", def: "Procedimiento de contratación de obras o servicios por parte del Estado." },
+    en: { term: "Public procurement / Government contract", def: "The process by which public authorities purchase goods or services from companies." },
+    legalNote: null
+  },
+  {
+    id: 211,
+    category: "Diritto Amministrativo",
+    it: { term: "Espropriazione per pubblica utilità", def: "Provvedimento col quale la PA acquisisce coattivamente un bene privato per fini pubblici." },
+    es: { term: "Expropiación forzosa", def: "Privación della propiedad privada por causa de interés social tras indemnización." },
+    en: { term: "Eminent domain / Compulsory purchase", def: "The power of a government to take private property for public use, with payment of compensation." },
+    legalNote: "Nota: 'Eminent domain' è il termine specifico negli USA."
+  },
+  {
+    id: 212,
+    category: "Procedura",
+    it: { term: "Litispendenza", def: "Situazione in cui una stessa causa pende davanti a giudici diversi." },
+    es: { term: "Litispendencia", def: "Existencia de un juicio pendiente entre las mismas partes y sobre el mismo objeto." },
+    en: { term: "Lis pendens / Pending litigation", def: "A pending legal action or a formal notice of such an action." },
+    legalNote: null
+  },
+  {
+    id: 213,
+    category: "Diritto Amministrativo",
+    it: { term: "Ricorso amministrativo", def: "Impugnazione di un atto davanti alla stessa amministrazione o al giudice speciale." },
+    es: { term: "Recurso administrativo", def: "Procedimiento para impugnar actos de la administración ante ella misma." },
+    en: { term: "Administrative appeal", def: "The request for a formal change of an official decision." },
+    legalNote: null
+  },
+  {
+    id: 214,
+    category: "Procedura",
+    it: { term: "Mezzi di prova", def: "Strumenti utilizzati per convincere il giudice della verità dei fatti." },
+    es: { term: "Medios de prueba", def: "Instrumentos previstos por la ley para acreditar hechos en un proceso." },
+    en: { term: "Evidence / Admissible evidence", def: "Information given in a legal investigation to support a claim." },
+    legalNote: null
+  },
+  {
+    id: 215,
+    category: "Procedura",
+    it: { term: "Competenza territoriale", def: "Suddivisione del potere giudiziario basata sulla localizzazione geografica." },
+    es: { term: "Competencia territorial", def: "Determinación del tribunal que debe conocer un asunto según el lugar." },
+    en: { term: "Venue / Territorial jurisdiction", def: "The place or county in which an injury is declared to have been done." },
+    legalNote: null
+  },
+  {
+    id: 216,
+    category: "Diritto Amministrativo",
+    it: { term: "Silenzio-assenso", def: "Situazione in cui l'inerzia della PA per un certo tempo equivale a un provvedimento positivo." },
+    es: { term: "Silencio administrativo positivo", def: "Presunción de que la administración acepta una solicitud ante su falta de respuesta." },
+    en: { term: "Tacit approval / Implied consent", def: "A legal principle where silence or inaction by an authority constitutes approval." },
+    legalNote: null
+  },
+  {
+    id: 217,
+    category: "Procedura",
+    it: { term: "Contumacia", def: "Mancata costituzione in giudizio di una parte regolarmente citata." },
+    es: { term: "Rebeldía", def: "Situación procesal de quien, siendo parte en un juicio, no comparece." },
+    en: { term: "Default / Failure to appear", def: "Failure to fulfill a legal obligation, such as appearing in court." },
+    legalNote: null
+  },
+  {
+    id: 218,
+    category: "Diritto Costituzionale",
+    it: { term: "Decreto legge", def: "Atto del governo con forza di legge adottato in casi di necessità e urgenza." },
+    es: { term: "Real Decreto-ley", def: "Norma con rango de ley dictada por el Gobierno en casos de extraordinaria urgencia." },
+    en: { term: "Executive order / Decree-law", def: "A law or regulation issued by the executive branch without the prior approval of parliament." },
+    legalNote: "Nota: In Italia deve essere convertito in legge dal Parlamento entro 60 giorni."
+  },
+  {
+    id: 219,
+    category: "Diritto Costituzionale",
+    it: { term: "Immunità parlamentare", def: "Protezione dei membri del Parlamento da procedimenti giudiziari per garantire la loro libertà." },
+    es: { term: "Inmunidad parlamentaria", def: "Prerrogativa de los parlamentarios para no ser procesados sin autorización de la cámara." },
+    en: { term: "Parliamentary immunity", def: "A legal immunity enjoyed by members of legislatures." },
+    legalNote: null
+  },
+  {
+    id: 220,
+    category: "Procedura",
+    it: { term: "Litisconsorzio", def: "Presenza di più parti nello stesso processo." },
+    es: { term: "Litisconsorcio", def: "Situación en la que varias personas actúan juntas como demandantes o demandados." },
+    en: { term: "Joinder of parties", def: "The bringing together of different parties in one legal action." },
+    legalNote: null
+  },
+  {
+    id: 221,
+    category: "Diritto Amministrativo",
+    it: { term: "Nullità dell'atto", def: "Invalidità che colpisce l'atto amministrativo privo di elementi essenziali." },
+    es: { term: "Nulidad de pleno derecho", def: "Grado máximo de invalidez de un acto administrativo." },
+    en: { term: "Void administrative act", def: "An act that has no legal effect from its inception." },
+    legalNote: null
+  },
+  {
+    id: 222,
+    category: "Procedura",
+    it: { term: "Onere della prova", def: "Obbligo di provare i fatti posti a fondamento di una domanda." },
+    es: { term: "Carga de la prueba", def: "Obligación de las partes de acreditar los hechos alegados." },
+    en: { term: "Burden of proof", def: "The obligation to prove one's assertion." },
+    legalNote: null
+  },
+  {
+    id: 223,
+    category: "Diritto Amministrativo",
+    it: { term: "Prevalenza dell'interesse pubblico", def: "Principio per cui l'interesse della collettività prevale su quello del singolo." },
+    es: { term: "Interés general", def: "Principio que justifica la actuación y privilegios de la Administración." },
+    en: { term: "Public interest", def: "The welfare or well-being of the general public." },
+    legalNote: null
+  },
+  {
+    id: 224,
+    category: "Procedura",
+    it: { term: "Giudice di Pace", def: "Magistrato onorario che decide su cause civili e penali di minore entità." },
+    es: { term: "Juez de Paz", def: "Órgano judicial unipersonal con competencias limitate a nivel local." },
+    en: { term: "Justice of the Peace / Small claims judge", def: "A magistrate of a lower court." },
+    legalNote: null
+  },
+  {
+    id: 225,
+    category: "Diritto Costituzionale",
+    it: { term: "Bicameralismo", def: "Sistema legislativo composto da due camere (es. Camera e Senato)." },
+    es: { term: "Bicameralismo", def: "Sistema legislativo basado en la existencia de dos cámaras." },
+    en: { term: "Bicameralism", def: "The practice of having a legislature divided into two separate assemblies." },
+    legalNote: null
+  },
+  {
+    id: 226,
+    category: "Diritto Amministrativo",
+    it: { term: "Concessione", def: "Atto con cui la PA conferisce a un privato l'esercizio di un diritto o servizio pubblico." },
+    es: { term: "Concesión administrativa", def: "Otorgamiento por la administración a particulares del derecho a explotar un servicio." },
+    en: { term: "Concession / Franchise", def: "A grant of rights, land or property by a government." },
+    legalNote: null
+  },
+  {
+    id: 227,
+    category: "Procedura",
+    it: { term: "Sentenza di rinvio", def: "Decisione con cui la Cassazione annulla una sentenza e rinvia la causa a un altro giudice." },
+    es: { term: "Sentencia de reenvío", def: "Resolución que devuelve el proceso a un tribunal inferior para que dicte nueva sentencia." },
+    en: { term: "Remand", def: "To send a case back to a lower court to be tried again." },
+    legalNote: null
+  },
+  {
+    id: 228,
+    category: "Diritto Costituzionale",
+    it: { term: "Promulgazione", def: "Atto col quale il Capo dello Stato attesta l'avvenuta approvazione di una legge." },
+    es: { term: "Promulgación", def: "Acto solemne por el que el Jefe del Estado da fe de la existencia de una ley." },
+    en: { term: "Enactment / Promulgation", def: "The formal proclamation or the declaration that a law is enacted." },
+    legalNote: null
+  },
+  {
+    id: 229,
+    category: "Procedura",
+    it: { term: "Intervento di terzo", def: "Ingresso di un soggetto estraneo in un processo già pendente." },
+    es: { term: "Intervención de terceros", def: "Incorporación a un proceso de una persona que no era parte inicialmente." },
+    en: { term: "Intervention", def: "A procedure to allow a non-party to join an ongoing litigation." },
+    legalNote: null
+  },
+  {
+    id: 230,
+    category: "Diritto Amministrativo",
+    it: { term: "Autotutela", def: "Potere della PA di annullare o revocare i propri atti illegittimi o inopportuni." },
+    es: { term: "Autotutela administrativa", def: "Capacidad de la administración para revisar y corregir sus propios actos." },
+    en: { term: "Self-redress / Administrative review", def: "The power of the administration to reconsider its own decisions." },
+    legalNote: null
+  },
+  {
+    id: 231,
+    category: "Diritto Costituzionale",
+    it: { term: "Sovranità popolare", def: "Principio per cui la sovranità appartiene al popolo." },
+    es: { term: "Soberanía popular", def: "Principio que identifica al pueblo como titular del poder del Estado." },
+    en: { term: "Popular sovereignty", def: "The principle that the authority of a state is created by the consent of its people." },
+    legalNote: null
+  },
+  {
+    id: 232,
+    category: "Procedura",
+    it: { term: "Sospensione del processo", def: "Arresto temporaneo dello svolgimento del processo per cause previste dalla legge." },
+    es: { term: "Suspensión del proceso", def: "Paralización temporal de las actuaciones judiciales." },
+    en: { term: "Stay of proceedings", def: "A ruling by a court to stop or suspend a legal proceeding." },
+    legalNote: null
+  },
+  {
+    id: 233,
+    category: "Diritto Amministrativo",
+    it: { term: "Discrezionalità amministrativa", def: "Facoltà della PA di scegliere la soluzione migliore per l'interesse pubblico." },
+    es: { term: "Discrecionalidad administrativa", def: "Margen de libertad que la ley otorga a la Administración para decidir." },
+    en: { term: "Administrative discretion", def: "The exercise of professional expertise and judgment by managers." },
+    legalNote: null
+  },
+  {
+    id: 234,
+    category: "Procedura",
+    it: { term: "Regolamento di competenza", def: "Mezzo per risolvere i conflitti tra giudici diversi sulla competenza." },
+    es: { term: "Cuestión de competencia", def: "Incidente procesal para determinar qué tribunal debe conocer un asunto." },
+    en: { term: "Conflict of jurisdiction", def: "A situation where two or more courts claim authority over the same matter." },
+    legalNote: null
+  },
+  {
+    id: 235,
+    category: "Diritto Costituzionale",
+    it: { term: "Legge ordinaria", def: "Atto approvato dal Parlamento secondo la procedura legislativa comune." },
+    es: { term: "Ley ordinaria", def: "Norma aprobada por el Parlamento que no requiere mayoría cualificada." },
+    en: { term: "Ordinary law / Statute", def: "A law passed by a legislature that is not a constitutional law." },
+    legalNote: null
+  },
+  {
+    id: 236,
+    category: "Procedura",
+    it: { term: "Nullità della citazione", def: "Vizio dell'atto introduttivo del giudizio che ne impedisce gli effetti." },
+    es: { term: "Nulidad del emplazamiento", def: "Invalidez de la notificación que llama al demandado a juicio." },
+    en: { term: "Defective service of process", def: "A situation where the legal notice of a lawsuit is not properly delivered." },
+    legalNote: null
+  },
+  {
+    id: 237,
+    category: "Diritto Amministrativo",
+    it: { term: "Interesse legittimo", def: "Situazione giuridica di chi pretende che la PA agisca secondo la legge." },
+    es: { term: "Interés legítimo", def: "Situación jurídica protegida que permite impugnar actos administrativos." },
+    en: { term: "Legitimate interest", def: "A legal status allowing a person to challenge an administrative decision." },
+    legalNote: "Nota: Distinzione tipica del diritto italiano, spesso difficile da tradurre fedelmente in inglese (dove si usa 'Standing')."
+  },
+  {
+    id: 238,
+    category: "Diritto Costituzionale",
+    it: { term: "Fiducia parlamentare", def: "Approvazione del Parlamento necessaria per la vita del Governo." },
+    es: { term: "Voto de confianza", def: "Manifestación de apoyo de la cámara legislativa al Gobierno." },
+    en: { term: "Confidence vote", def: "A vote showing that a majority continues to support the policy of a leader or government." },
+    legalNote: null
+  },
+  {
+    id: 239,
+    category: "Diritto Amministrativo",
+    it: { term: "Demanio pubblico", def: "Insieme dei beni appartenenti allo Stato destinati all'uso della collettività." },
+    es: { term: "Dominio público", def: "Bienes de titularidad pública destinados al uso o servicio público." },
+    en: { term: "Public domain / Crown property", def: "Property owned by the government or for public use." },
+    legalNote: null
+  },
+  {
+    id: 240,
+    category: "Procedura",
+    it: { term: "Istanza", def: "Domanda rivolta all'autorità giudiziaria per ottenere un provvedimento." },
+    es: { term: "Instancia / Petición", def: "Solicitud formal dirigida a un juez o tribunal." },
+    en: { term: "Petition / Motion", def: "A formal written request to a court for an order of the court." },
+    legalNote: null
+  },
+  {
+    id: 241,
+    category: "Diritto Costituzionale",
+    it: { term: "Corte di Cassazione", def: "Giudice supremo di legittimità che assicura l'uniforme interpretazione della legge." },
+    es: { term: "Tribunal Supremo", def: "Órgano jurisdiccional superior en todos los órdenes." },
+    en: { term: "Supreme Court of Cassation", def: "The highest court of appeal or court of last resort." },
+    legalNote: null
+  },
+  {
+    id: 242,
+    category: "Diritto Amministrativo",
+    it: { term: "Autorità Garante (Antitrust)", def: "Organo indipendente che vigila sulla concorrenza e sul mercato." },
+    es: { term: "Autoridad de Competencia", def: "Organismo encargado de supervisar la competencia en los mercados." },
+    en: { term: "Regulatory authority / Antitrust agency", def: "A public authority responsible for exercising autonomous authority over some area of activity." },
+    legalNote: null
+  },
+  {
+    id: 243,
+    category: "Procedura",
+    it: { term: "Consulenza tecnica (CTU)", def: "Attività svolta da un esperto per fornire al giudice valutazioni tecniche." },
+    es: { term: "Peritaje judicial", def: "Informe realizado por un experto en una materia para auxiliar al juez." },
+    en: { term: "Expert witness / Court-appointed expert", def: "A person who is permitted to testify at a trial because of special knowledge." },
+    legalNote: null
+  },
+  {
+    id: 244,
+    category: "Diritto Costituzionale",
+    it: { term: "Gazzetta Ufficiale", def: "Pubblicazione ufficiale contenente i testi delle leggi e degli atti statali." },
+    es: { term: "Boletín Oficial del Estado (BOE)", def: "Diario oficial nacional donde se publican las normas." },
+    en: { term: "Official Gazette", def: "The legal newspaper of a country or state." },
+    legalNote: "Nota: In Inghilterra si chiama 'The London Gazette'."
+  },
+  {
+    id: 245,
+    category: "Procedura",
+    it: { term: "Diritto di difesa", def: "Diritto inviolabile di ogni persona di farsi assistere in giudizio." },
+    es: { term: "Derecho a la defensa", def: "Garantía fundamental de contar con asistencia letrada en un proceso." },
+    en: { term: "Right to counsel / Right of defense", def: "The right to be represented by a lawyer." },
+    legalNote: null
+  },
+  {
+    id: 246,
+    category: "Diritto Amministrativo",
+    it: { term: "Protocollo d'intesa", def: "Accordo tra pubbliche amministrazioni o con privati per attività comuni." },
+    es: { term: "Protocolo de intenciones", def: "Documento que describe un acuerdo entre partes que no es vinculante." },
+    en: { term: "Memorandum of Understanding (MoU)", def: "A type of agreement between two or more parties." },
+    legalNote: null
+  },
+  {
+    id: 247,
+    category: "Procedura",
+    it: { term: "Rilevanza della prova", def: "Capacità di un mezzo di prova di influire sulla decisione finale." },
+    es: { term: "Pertinencia de la prueba", def: "Relación de la prueba con el objeto del proceso." },
+    en: { term: "Relevance of evidence", def: "The tendency of a given item of evidence to prove or disprove one of the legal elements of the case." },
+    legalNote: null
+  },
+  {
+    id: 248,
+    category: "Diritto Costituzionale",
+    it: { term: "Pari opportunità", def: "Principio volto a garantire l'assenza di ostacoli alla partecipazione politica e sociale." },
+    es: { term: "Igualdad de oportunidades", def: "Principio que garantiza que todas las personas tengan el mismo acceso a recursos." },
+    en: { term: "Equal opportunity", def: "The policy of treating employees and others without discrimination." },
+    legalNote: null
+  },
+  {
+    id: 249,
+    category: "Procedura",
+    it: { term: "Udienza preliminare", def: "Fase del processo in cui si valuta se gli elementi raccolti giustificano il rinvio a giudizio." },
+    es: { term: "Audiencia previa", def: "Fase procesal para fijar el objeto del pleito e intentar un acuerdo." },
+    en: { term: "Preliminary hearing", def: "A proceeding, after a criminal complaint has been filed, to determine whether there is enough evidence to go to trial." },
+    legalNote: null
+  },
+  {
+    id: 250,
+    category: "Diritto Amministrativo",
+    it: { term: "Annullamento d'ufficio", def: "Provvedimento con cui la PA elimina un atto illegittimo con effetto retroattivo." },
+    es: { term: "Anulación de oficio", def: "Revisión por la propia administración de sus actos nulos." },
+    en: { term: "Ex officio annulment", def: "The invalidation of an act by the same authority that issued it." },
+    legalNote: null
+  }
+];
+
+export default function App() {
+  const [query, setQuery] = useState("");
+  const [selected, setSelected] = useState(null);
+  const [favorites, setFavorites] = useState([]);
+  const [showOnlyFavs, setShowOnlyFavs] = useState(false);
+  const [activeTab, setActiveTab] = useState('it');
+
+  const toggleFavorite = (id) => {
+    setFavorites(prev => 
+      prev.includes(id) ? prev.filter(favId => favId !== id) : [...prev, id]
+    );
+  };
+
+  const filtered = useMemo(() => {
+    return legalTermsData.filter(t => {
+      const matchesSearch = t.it.term.toLowerCase().includes(query.toLowerCase()) ||
+                            t.en.term.toLowerCase().includes(query.toLowerCase()) ||
+                            t.es.term.toLowerCase().includes(query.toLowerCase());
+      const matchesFav = showOnlyFavs ? favorites.includes(t.id) : true;
+      return matchesSearch && matchesFav;
+    });
+  }, [query, showOnlyFavs, favorites]);
+
+  return (
+    <div style={styles.container}>
+      {/* HEADER */}
+      <header style={styles.header}>
+        <div style={styles.headerContent}>
+          <h1 style={styles.logo}>QUICK<span style={{color: '#FF6B00'}}>LEX</span></h1>
+          <button 
+            onClick={() => setShowOnlyFavs(!showOnlyFavs)}
+            style={{...styles.favBtn, backgroundColor: showOnlyFavs ? '#FF6B00' : '#222'}}
+          >
+            {showOnlyFavs ? '★' : '☆'}
+          </button>
+        </div>
+
+        {!selected && (
+          <div style={styles.searchBox}>
+            <input 
+              type="text"
+              placeholder="Cerca termine legale..."
+              style={styles.input}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+          </div>
+        )}
+      </header>
+
+      {/* MAIN CONTENT */}
+      <main style={styles.main}>
+        {!selected ? (
+          <div style={styles.list}>
+            <p style={styles.counter}>
+              {showOnlyFavs ? "PREFERITI" : "TUTTI I TERMINI"} ({filtered.length})
+            </p>
+            {filtered.map(t => (
+              <div key={t.id} onClick={() => setSelected(t)} style={styles.card}>
+                <div>
+                  <h3 style={styles.cardTitle}>{t.it.term}</h3>
+                  <p style={styles.cardSub}>EN: {t.en.term} | ES: {t.es.term}</p>
+                </div>
+                <button 
+                  onClick={(e) => { e.stopPropagation(); toggleFavorite(t.id); }}
+                  style={{...styles.star, color: favorites.includes(t.id) ? '#FF6B00' : '#444'}}
+                >
+                  ★
+                </button>
+              </div>
+            ))}
+          </div>
+        ) : (
+          /* DETTAGLIO */
+          <div style={styles.detailView}>
+            <button onClick={() => setSelected(null)} style={styles.backBtn}>
+              ← Torna alla lista
+            </button>
+
+            <div style={styles.detailCard}>
+              <div style={styles.categoryTag}>{selected.category}</div>
+              <h2 style={styles.detailTitle}>{selected.it.term}</h2>
+
+              {/* TABS */}
+              <div style={styles.tabs}>
+                {['it', 'en', 'es'].map(lang => (
+                  <button
+                    key={lang}
+                    onClick={() => setActiveTab(lang)}
+                    style={{
+                      ...styles.tab,
+                      backgroundColor: activeTab === lang ? '#FF6B00' : '#111',
+                      color: activeTab === lang ? '#000' : '#666'
+                    }}
+                  >
+                    {lang.toUpperCase()}
+                  </button>
+                ))}
+              </div>
+
+              <div style={styles.content}>
+                <label style={styles.label}>TERMINE</label>
+                <p style={styles.mainTerm}>{selected[activeTab].term}</p>
+                
+                <label style={styles.label}>DEFINIZIONE</label>
+                <p style={styles.definition}>{selected[activeTab].def}</p>
+
+                {selected.legalNote && (
+                  <div style={styles.noteBox}>
+                    <strong style={{color: '#FF6B00', display: 'block', marginBottom: '5px'}}>NOTA LEGALE:</strong>
+                    {selected.legalNote}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+      </main>
+    </div>
+  );
+}
+
+// STILI INLINE (Così non hai bisogno di file CSS esterni)
+const styles = {
+  container: { backgroundColor: '#000', minHeight: '100vh', color: '#fff', fontFamily: 'sans-serif' },
+  header: { padding: '20px', borderBottom: '1px solid #222', sticky: 'top', backgroundColor: '#000' },
+  headerContent: { maxWidth: '600px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
+  logo: { fontSize: '24px', fontWeight: '900', fontStyle: 'italic', letterSpacing: '-1px' },
+  favBtn: { border: 'none', borderRadius: '50%', width: '40px', height: '40px', cursor: 'pointer', color: '#fff', fontSize: '20px' },
+  searchBox: { maxWidth: '600px', margin: '20px auto 0' },
+  input: { w: '100%', width: '100%', padding: '12px', borderRadius: '10px', backgroundColor: '#111', border: '1px solid #333', color: '#fff', outline: 'none' },
+  main: { maxWidth: '600px', margin: '0 auto', padding: '20px' },
+  list: { display: 'flex', flexDirection: 'column', gap: '10px' },
+  counter: { fontSize: '10px', color: '#555', fontWeight: 'bold' },
+  card: { backgroundColor: '#111', padding: '15px', borderRadius: '15px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', border: '1px solid #222' },
+  cardTitle: { margin: 0, fontSize: '16px' },
+  cardSub: { margin: '5px 0 0', fontSize: '11px', color: '#666' },
+  star: { background: 'none', border: 'none', fontSize: '22px', cursor: 'pointer' },
+  detailView: { animation: 'fadeIn 0.3s ease' },
+  backBtn: { background: 'none', border: 'none', color: '#FF6B00', fontWeight: 'bold', cursor: 'pointer', marginBottom: '20px' },
+  detailCard: { backgroundColor: '#111', padding: '30px', borderRadius: '30px', border: '1px solid #222' },
+  categoryTag: { color: '#FF6B00', fontSize: '10px', fontWeight: 'bold', border: '1px solid #FF6B00', padding: '3px 10px', borderRadius: '20px', display: 'inline-block', marginBottom: '15px' },
+  detailTitle: { fontSize: '32px', margin: '0 0 20px' },
+  tabs: { display: 'flex', gap: '5px', backgroundColor: '#000', padding: '5px', borderRadius: '12px', marginBottom: '20px' },
+  tab: { flex: 1, padding: '10px', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '10px' },
+  label: { fontSize: '9px', color: '#555', fontWeight: 'bold', letterSpacing: '1px' },
+  mainTerm: { fontSize: '20px', fontWeight: 'bold', margin: '5px 0 20px' },
+  definition: { color: '#aaa', lineHeight: '1.6', fontStyle: 'italic' },
+  noteBox: { marginTop: '30px', padding: '15px', backgroundColor: 'rgba(255,107,0,0.05)', border: '1px solid rgba(255,107,0,0.2)', borderRadius: '15px', fontSize: '13px' }
+};
